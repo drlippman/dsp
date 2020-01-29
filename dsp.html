@@ -19,7 +19,11 @@
         'warnunderprepared':false,
         'finallevel': 0,
         'qtoshow3': '',
-        'qtoshow4': ''
+        'qtoshow4': '',
+        'avgrating3': 0,
+        'pctzeros3': 0,
+        'avgrating4': 0,
+        'pctzeros4': 0
       };  //value store
       function process(n) {
         // validate entries on this page
@@ -48,7 +52,22 @@
           for (var i=0; i < toget.length; i++) {
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
-          showstep(1);
+          
+          /*$.post('dspapi.php', {
+              checksid: true,
+              sid: $("#sid").val()
+          }).done(function( msg ) {
+            if (msg.match(/ERROR/)) {
+              $("#siderr").html("You already have a DSP score.");
+            } else {
+              showstep(1);
+            }
+          }).fail(function () {
+            $("#siderr").html("Cannot verify this ID right now. Please try again later");
+          });
+          */
+           showstep(1);
+          
         } else if (n==1) { //continuing from HS page
           var toget = ['lasths','hsgpa','hsyrs','hascoll'];
           for (var i=0; i < toget.length; i++) {
@@ -250,6 +269,9 @@
         });
         var avgrating = ratingvals.reduce(function(a,b) {return a+b;},0)/ratingvals.length;
         var pctzeros = ratingvals.filter(function(a) { return a==0;}).length/ratingvals.length;
+        v.avgrating3 = Math.round(avgrating*100)/100;
+        v.pctzeros3 = Math.round(pctzeros*100);
+        v.ratingvals3 = ratingvals.slice();
       console.log(avgrating,pctzeros);
         v.finallevel = v.initlevel;
 
@@ -284,13 +306,13 @@
         } else { // higher stem
           if (v.knowcourse == 'm147' || (v.knowcourse=='dontknow' && v.path=='bus')) {
             v.recommendation = 'm147';
-          } else if (initlevel == 5) {
+          } else if (v.initlevel == 5) {
             v.recommendation = 'm142';
-          } else if (initlevel == 6) {
+          } else if (v.initlevel == 6) {
             v.recommendation = 'm151';
-          } else if (initlevel == 7) {
+          } else if (v.initlevel == 7) {
             v.recommendation = 'm152';
-          } else if (initlevel == 8) {
+          } else if (v.initlevel == 8) {
             v.recommendation = 'm163';
           }
         }
@@ -307,7 +329,10 @@
         });
         var avgrating = ratingvals.reduce(function(a,b) {return a+b;},0)/ratingvals.length;
         var pctzeros = ratingvals.filter(function(a) { return a==0;}).length/ratingvals.length;
-
+        v.avgrating4 = Math.round(avgrating*100)/100;
+        v.pctzeros4 = Math.round(pctzeros*100);
+        v.ratingvals4 = ratingvals.slice();
+        
         if (v.qtoshow4 == 'arith') { // for non-stem coreq
           if (avgrating < 2 || pctzeros > .2) { // struggled on arith
             v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
@@ -355,11 +380,11 @@
       function genRatingHtml(qtoshow) {
         var html = '';
         for (var i = 0; i < questions[qtoshow].length; i++) {
-          html += '<tr class="radiolist"><td>' + questions[qtoshow][i] + '</td>';
+          html += '<tr class="radiolist"><td>' + questions[qtoshow][i] + '</td><td>';
           for (var j = 0; j < 4; j++) {
-            html += '<td><label><input type=radio name="rating'+i+'" value='+j+'> '+j+'</label></td>';
+            html += '<label><input type=radio name="rating'+i+'" value='+j+'><span>'+j+'</span></label>';
           }
-          html += '</tr>';
+          html += '</td></tr>';
         }
         return html;
       }
@@ -393,22 +418,31 @@
         }
         submitrec();
       }
-      var data = {'placement': []};
+      
       function submitrec() {
-        data.name = $("#stuname").val();
+        var now = new Date();
+        var data = {};
+        $("#recordedmsg").html("Recording...");
+        data.firstname = $("#firstname").val();
+        data.lastname = $("#firstname").val();
         data.sid = $("#sid").val();
-        data.values = v;
-        data.placement.push(v.finallevel);
-        data.ratingvals3 = [];
-        $("#ratingbody3").find("input:checked").each(function() {
-          data.ratingvals3.push($(this).val());
-        });
-        data.ratingvals4 = [];
-        $("#ratingbody4").find("input:checked").each(function() {
-          data.ratingvals4.push($(this).val());
-        });
-
+        data.placement = v.finallevel;
+        v.date = now.toISOString();
+        data.values = JSON.stringify(v);
+        data.record = 'record';
         console.log(data);
+        
+        $.post("https:/www.myopenmath.com/index.php", data)
+         .done(function ( msg ) {
+             if (msg.match(/ERROR/)) {
+               $("#recordedmsg").html("Unable to record result - you already have a DSP score.");
+             } else {
+               $("#recordedmsg").html("Results recorded.");
+             }
+         })
+         .fail(function () {
+             $("#recordedmsg").html("Unable to record results - please try again later.");
+         });
 
       }
     /*
@@ -564,10 +598,13 @@
       	 margin-bottom: .2rem;
       }
       .valerr {
-      	  border: 4px solid #f00;
+      	  border: 2px solid #f00;
+      }
+      tr.valerr {
+        border: 0px;
       }
       tr.valerr td:first-child {
-        border-left: 2px solid #f00 !important;
+        border-left: 4px solid #f00 !important;
       }
       .stepnav {
         display: flex;
@@ -591,16 +628,50 @@
       .ratings {
         margin-bottom: 15px;
       }
-      .ratingbody td {
-        border: 1px solid #eee;
+      .ratings th {
+        text-align: center;
+      }
+      .ratingbody td, .ratings th {
+        border-bottom: 1px solid #eee;
         padding: 10px;
       }
       .ratingbody tr > :first-child {
         padding-right: 50px;
       }
       .ratingbody td label {
-        margin-bottom: 0;
+        margin: 0;
       }
+      .ratingbody input {
+        opacity: 0;
+      }
+      .ratingbody label {
+        position: relative;
+        width: 36px;
+        height: 36px;
+      }
+      .ratingbody tr td:last-child {
+        white-space: nowrap;
+      }
+      .ratingbody input ~ span {
+        position: absolute;
+        top:0px;
+        left:0px;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #666;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .ratingbody input ~ span:hover {
+        background-color: #eee;
+      }
+      .ratingbody input:checked ~ span {
+        background-color: #d9e3f7;
+      }
+        
       p.rec {
         font-size: 120%;
         font-weight: bold;
@@ -691,6 +762,13 @@
       .arrow-steps .stepbtn:disabled:after {
         border-left: 17px solid #f5f5f5;
       }
+      .form-group input[type=text] {
+        display: inline;
+        width: auto;
+      }
+      #siderr, #recordedmsg {
+        color: #090;
+      }
     </style>
   </head>
   <body>
@@ -719,12 +797,13 @@
       </p>
 
       <div class="form-group">
-        <label for="sid">Student ID</label>
+        <label for="sid">Student ID</label><br/>
         <input type=text class="form-control req" id="sid" value="123">
       </div>
       <div class="form-group">
-        <label for="stuname">Full name</label>
-        <input type=text class="form-control req" id="stuname" value="name">
+        <label for="stuname">Name</label> <span id="siderr"></span><br/>
+        <input type=text class="form-control req" id="firstname" placeholder="First Name">
+        <input type=text class="form-control req" id="lastname" placeholder="Last Name">
       </div>
       <p>We can make the best recommedations if you know what math course you
         will need. If you're not sure, visit the
@@ -1078,6 +1157,7 @@
           Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
         </p>
       </div>
+      <p id="recordedmsg"></p>
     </div>
   </body>
 </html>
