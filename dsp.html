@@ -53,20 +53,23 @@
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
           
-          /*$.post('dspapi.php', {
-              checksid: true,
-              sid: $("#sid").val()
-          }).done(function( msg ) {
-            if (msg.match(/ERROR/)) {
-              $("#siderr").html("You already have a DSP score.");
-            } else {
-              showstep(1);
-            }
-          }).fail(function () {
-            $("#siderr").html("Cannot verify this ID right now. Please try again later");
-          });
-          */
-           showstep(1);
+          if (window.location.protocol == 'file:') {
+            showstep(1);
+          } else {
+            $.post('dspapi.php', {
+                checksid: true,
+                sid: $("#sid").val()
+            }).done(function( msg ) {
+              if (msg.match(/ERROR/)) {
+                $("#siderr").html("You already have a DSP score.");
+              } else {
+                showstep(1);
+              }
+            }).fail(function () {
+              $("#siderr").html("Cannot verify this ID right now. Please try again later");
+            });
+          }
+          
           
         } else if (n==1) { //continuing from HS page
           var toget = ['lasths','hsgpa','hsyrs','hascoll'];
@@ -432,17 +435,19 @@
         data.record = 'record';
         console.log(data);
         
-        $.post("https:/www.myopenmath.com/index.php", data)
-         .done(function ( msg ) {
-             if (msg.match(/ERROR/)) {
-               $("#recordedmsg").html("Unable to record result - you already have a DSP score.");
-             } else {
-               $("#recordedmsg").html("Results recorded.");
-             }
-         })
-         .fail(function () {
-             $("#recordedmsg").html("Unable to record results - please try again later.");
-         });
+        if (window.location.protocol != 'file:') {
+          $.post("dspapi.php", data)
+           .done(function ( msg ) {
+               if (msg.match(/ERROR/)) {
+                 $("#recordedmsg").html("Unable to record result - you already have a DSP score.");
+               } else {
+                 $("#recordedmsg").html("Results recorded.");
+               }
+           })
+           .fail(function () {
+               $("#recordedmsg").html("Unable to record results - please try again later.");
+           });
+        }
 
       }
     /*
