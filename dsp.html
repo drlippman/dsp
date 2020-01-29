@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  	<title>
+  	  Pierce College Math Directed Self Placement
+  	</title>
+  	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  	<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+    <script src="https://www.myopenmath.com/javascript/ASCIIMathTeXImg_min.js"></script>
+    <script defer src="https://www.myopenmath.com/katex/auto-render.js"></script>
+    <script>
+      var v = {
+        'curstep':0,
+        'hascoll':0,
+        'stutypecertain':0,
+        'warnarithmetic': false,
+        'warnunderprepared':false,
+        'finallevel': 0,
+        'qtoshow3': '',
+        'qtoshow4': ''
+      };  //value store
+      function process(n) {
+        // validate entries on this page
+        var haserror = false;
+      	$(".valerr").removeClass("valerr");
+      	$("#step"+n).find(".radiolist").each(function() {
+      	  if ($(this).find("input:checked").length == 0) {
+      	  	 $(this).addClass("valerr");
+      	  	 haserror = true;
+      	  }
+      	});
+      	$("#step"+n).find("input.req").each(function() {
+      	  if ($(this).val().trim()=='') {
+      	  	 $(this).addClass("valerr");
+      	  	 haserror = true;
+      	  }
+      	});
+      	if (haserror) {
+      	  $("#error").html("Please answer all the questions.").show();
+      	  return;
+      	}
+      	$("#error").hide();
+
+        if (n==0) { // continuing from start page
+          var toget = ['path','knowcourse'];
+          for (var i=0; i < toget.length; i++) {
+            v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
+          }
+          showstep(1);
+        } else if (n==1) { //continuing from HS page
+          var toget = ['lasths','hsgpa','hsyrs','hascoll'];
+          for (var i=0; i < toget.length; i++) {
+            v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
+          }
+          if (v.hascoll == 1) {
+            showstep(2);
+          } else {
+            calcInitLevel();
+            generateRatings3();
+            showstep(3);
+          }
+        } else if (n==2) { // continuing from college page
+          var toget = ['lastcoll','collgpa','collyrs'];
+          for (var i=0; i < toget.length; i++) {
+            v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
+          }
+          calcInitLevel();
+          generateRatings3();
+          showstep(3);
+        } else if (n==3) { // continuing from refine 1 page
+          var shownext = calcRecommendation3();
+          if (shownext == 4) {
+            generateRatings4();
+          }
+          showstep(shownext);
+        } else if (n==4) { // continuing from refine 2 page
+          calcRecommendation4();
+          showstep(5);
+        }
+      }
+      function showstep(n) {
+        $('.step').hide();
+        if (n < 5) { // hide recommendations
+          $("#step5 div, #step5 span").hide();
+        }
+        if (n < 4) { // clear step 4 ratings
+          $("#ratingbody4").html("");
+          v.warnarithmetic = false;
+        }
+        if (n < 3) { // clear step 3 ratings
+          $("#ratingbody3").html("");
+          v.warnarithmetic = false;
+          v.warnunderprepared = false;
+        }
+
+        // generate content
+        if (n == 5) {
+          generateRecommedation();
+        }
+
+        // set nav tab status
+        var skiptab = [];
+        if (!v.hascoll) {
+          skiptab.push(2);
+        }
+        if ($("#step4 .ratingbody td").length == 0) {
+            skiptab.push(4);
+        }
+        $(".stepbtn, .stepnav button").prop("disabled", true).removeClass("current");
+        $(".stepbtn, .stepnav button").each(function(i,el) {
+          if (i <= n && skiptab.indexOf(i)===-1) {
+            el.disabled = false;
+          }
+          if (i == n) {
+            $(el).addClass("current");
+          }
+        });
+        v.curstep = n;
+        $("#step"+n).show();
+        window.scrollTo(0,0);
+      }
+
+      // calculate initvalue, store in v.initlevel
+      function calcInitLevel() {
+        // start with student type
+        if (v.knowcourse == 'm141' || v.knowcourse == 'm147') {
+          v.stutype = 'stem';
+        } else if (v.knowcourse == 'dontknow') {
+          if (v.path == 'arts' || v.path == 'soc') {
+            v.stutype = 'nonstem';
+          } else {
+            v.stutype = 'stem';
+          }
+          v.stutypecertain = false;
+        } else {
+          v.stutype = 'nonstem';
+        }
+
+        var initlevel = 0;
+        /*
+        initlevel values:
+          0: 54
+          1: 98/107/146/131 w coreq
+          2: 141/107/146/131 w coreq
+          3: 147/107/146, or 141 w coreq
+          4: 141/147/107/146
+          5: 142
+          6: 151
+          7: 152
+          8: 153
+
+        */
+        switch (v.lasths) {
+          case 0: //prealg
+            initlevel = 1;
+            break;
+          case 1: // alg 1
+            if (v.hsgpa > 1 && v.hsyrs < 2) { // recent
+              initlevel = 2;
+            } else {
+              initlevel = 1;
+            }
+            break;
+          case 2: // alternative to alg 2
+            if (v.hsgpa > 1 && v.hsyrs < 2) { // recent
+              initlevel = 3;
+            } else {
+              initlevel = 1;
+            }
+            break;
+          case 3: // alg 2
+            if (v.hsgpa > 1 && v.hsyrs < 2) { // recent
+              initlevel = 4;
+            } else if (v.hsgpa == 0) { // got a D
+              initlevel = 1
+            } else {
+              initlevel = 3;
+            }
+            break;
+          case 4: // precalc
+            initlevel = 5;
+            break;
+          case 5: // trig
+            initlevel = 6;
+            break;
+          case 6: //calc
+            initlevel = 7;
+            break;
+        }
+        if (initlevel > 3 && v.hsgpa == 0) {
+          initlevel = initlevel - 1; // if got D, suggest they retake
+        }
+
+        if (v.hascoll == 1) { // has college coursework
+          var collinitlevel = 0;
+
+          switch (v.lastcoll) {
+            case 0: //54
+              collinitlevel = 1;
+              break;
+            case 1: // 60
+            case 2: // 96
+              if (v.collgpa < 1) { // low or been a while
+                collinitlevel = 1;
+              } else {
+                collinitlevel = 2;
+              }
+              break;
+            case 3: // 98
+              if (v.collgpa < 1) { // low or been a while
+                collinitlevel = 3;
+              } else {
+                collinitlevel = 4;
+              }
+              break;
+            case 4: // 141
+              collinitlevel = 5;
+              break;
+            case 5: // 142
+              collinitlevel = 6;
+              break;
+            case 6: // 151
+              collinitlevel = 7;
+              break;
+            case 7: // 152
+              collinitlevel = 8;
+              break;
+          }
+          if (collinitlevel > 3 && v.collgpa < 1) {
+            // low previous, or been a while, suggest coreq or prev course
+            collinitlevel = collinitlevel - 1;
+          }
+          initlevel = Math.max(initlevel, collinitlevel);
+        }
+        console.log("initlevel:"+initlevel);
+        v.initlevel = Math.max(initlevel,1);
+      }
+      function calcRecommendation3() {
+        // pull ratings from step 3, make recommedation
+        // if recommendation for addl refinement, will set v.qtoshow4
+        // return: 4 for additional refinement, 5 for done
+        var ratingvals = [];
+        v.warnunderprepared = false;
+        v.warnarithmetic = false;
+        v.qtoshow4 = '';
+        $("#ratingbody3").find("input:checked").each(function() {
+          ratingvals.push(1*$(this).val());
+        });
+        var avgrating = ratingvals.reduce(function(a,b) {return a+b;},0)/ratingvals.length;
+        var pctzeros = ratingvals.filter(function(a) { return a==0;}).length/ratingvals.length;
+      console.log(avgrating,pctzeros);
+        v.finallevel = v.initlevel;
+
+        if (v.qtoshow3 == 'arith') { // init was for 98
+          v.recommendation = 'm98' + (v.knowcourse=='dontknow' ? 'uncert' : '') + 'coreq';
+          if (avgrating < 2 || pctzeros > .2) { // struggled on arith
+            v.warnarithmetic = true;
+          }
+        } else if (v.qtoshow3 == 'pre141') { //stem
+          if (avgrating > 2 && pctzeros < .01) { // did well, recommmend non-coreq
+            v.recommendation = v.knowcourse=='dontknow' ? 'stem' : v.knowcourse;
+          } else if (v.initlevel < 4) { // initial was 141coreq, and rated low
+            v.qtoshow4 = 'pre98';
+            return 4;
+          } else { // initial was 141 and rated low
+            v.recommendation = v.knowcourse=='dontknow' ? 'stem' : v.knowcourse;
+            v.warnunderprepared = true;
+          }
+          if (v.recommendation == 'stem' && v.path=='bus') { // for bus "don't know", rec 147
+            v.recommendation = 'm147';
+          }
+        } else if (v.qtoshow3 == 'pre146') { //nonstem
+          if (avgrating > 2 && pctzeros < .01) { // did well, recommmend non-coreq
+            v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
+          } else if (v.initlevel < 3) { // initial was 146coreq, and rated low
+            v.qtoshow4 = 'arith';
+            return 4;
+          } else { // initial was 146 and rated low
+             v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
+             v.warnunderprepared = true;
+          }
+        } else { // higher stem
+          if (v.knowcourse == 'm147' || (v.knowcourse=='dontknow' && v.path=='bus')) {
+            v.recommendation = 'm147';
+          } else if (initlevel == 5) {
+            v.recommendation = 'm142';
+          } else if (initlevel == 6) {
+            v.recommendation = 'm151';
+          } else if (initlevel == 7) {
+            v.recommendation = 'm152';
+          } else if (initlevel == 8) {
+            v.recommendation = 'm163';
+          }
+        }
+
+        console.log("rec3:"+v.recommendation);
+        return 5;
+      }
+      function calcRecommendation4() {
+        // pull ratings from step 4, make recommendation
+        var ratingvals = [];
+        v.warnarithmetic = false;
+        $("#ratingbody4").find("input:checked").each(function() {
+          ratingvals.push(1*$(this).val());
+        });
+        var avgrating = ratingvals.reduce(function(a,b) {return a+b;},0)/ratingvals.length;
+        var pctzeros = ratingvals.filter(function(a) { return a==0;}).length/ratingvals.length;
+
+        if (v.qtoshow4 == 'arith') { // for non-stem coreq
+          if (avgrating < 2 || pctzeros > .2) { // struggled on arith
+            v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
+            v.warnarithmetic = true;
+          }
+        } else if (v.qtoshow4 == 'pre98') { // for 141coreq
+          if (avgrating < 2 || pctzeros > .2) { // struggled on pre98, move down
+            v.recommendation = 'm98' + (v.knowcourse=='dontknow' ? 'uncert' : '');
+            v.finallevel = 1;
+          } else { // is ok
+            v.recommendation = v.knowcourse=='dontknow' ? 'stem' : v.knowcourse;
+          }
+        }
+        v.recommendation += 'coreq';
+        console.log("rec4:"+v.recommendation);
+      }
+      function generateRatings3() {
+        // populate step 3 ratings html
+        var qtoshow;
+        if (v.initlevel == 1 && v.stutype == 'stem') {
+          qtoshow = 'arith';
+        } else if (v.stutype == 'stem' && v.initlevel < 5) {
+          qtoshow = 'pre141'
+        } else if (v.stutype == 'nonstem') {
+          qtoshow = 'pre146';
+        } else if (v.initlevel == 5) {
+          qtoshow = 'pre142';
+        } else if (v.initlevel == 6) {
+          qtoshow = 'pre151';
+        } else if (v.initlevel == 7) {
+          qtoshow = 'pre152';
+        } else if (v.initlevel == 8) {
+          qtoshow = 'pre163';
+        }
+        v.qtoshow3 = qtoshow;
+        console.log("qtoshow3:"+qtoshow);
+        $("#ratingbody3").html(genRatingHtml(qtoshow));
+        renderMathInElement(document.getElementById("ratingbody3"));
+      }
+      function generateRatings4() {
+        // populate step 4 ratings html
+        $("#ratingbody4").html(genRatingHtml(v.qtoshow4));
+        renderMathInElement(document.getElementById("ratingbody4"));
+      }
+      function genRatingHtml(qtoshow) {
+        var html = '';
+        for (var i = 0; i < questions[qtoshow].length; i++) {
+          html += '<tr class="radiolist"><td>' + questions[qtoshow][i] + '</td>';
+          for (var j = 0; j < 4; j++) {
+            html += '<td><label><input type=radio name="rating'+i+'" value='+j+'> '+j+'</label></td>';
+          }
+          html += '</tr>';
+        }
+        return html;
+      }
+      function generateRecommedation() {
+        $("#step5 div, #step5 span").hide();
+        // display recommedation based on previous calculations
+        $("#"+v.recommendation).show();
+        if (v.warnunderprepared) {
+          $("#"+v.recommendation + " .underprep").show();
+        }
+        if (v.recommendation.match(/coreq/)) {
+          $("#aboutcoreq").show();
+          $("#coreqis").show();
+        } else if (v.initlevel < 5) {
+          if (v.warnunderprepared) {
+            $("#warnunderpreparedcoreq").show();
+          } else {
+            $("#coreqoption").show();
+          }
+          $("#coreqis").show();
+        } else if (v.warnunderprepared) {
+          $("#warnunderprepared").show();
+        }
+        if (v.warnarithmetic) {
+          $("#"+v.recommendation+" .warnarithmetic").show();
+        }
+        if (v.finallevel < 5) {
+          $("#alt"+v.finallevel).show();
+        } else {
+          $("#alt5").show();
+        }
+        submitrec();
+      }
+      var data = {'placement': []};
+      function submitrec() {
+        data.name = $("#stuname").val();
+        data.sid = $("#sid").val();
+        data.values = v;
+        data.placement.push(v.finallevel);
+        data.ratingvals3 = [];
+        $("#ratingbody3").find("input:checked").each(function() {
+          data.ratingvals3.push($(this).val());
+        });
+        data.ratingvals4 = [];
+        $("#ratingbody4").find("input:checked").each(function() {
+          data.ratingvals4.push($(this).val());
+        });
+
+        console.log(data);
+
+      }
+    /*
+      Separate out process(n)  from  showtab(n)
+      store curtab globally
+      nav buttons will do showtab(n)
+        if n < curtab, then clear out anything after n (empty ratings, etc)
+        calc which tabs to skip/grey
+        generate ratings and such
+        display it
+      Continue buttons will do process(n, where n is the current tab)
+        Process anything on that form, store results in globals
+        calculate anything needed for next form: qtoshow, etc.
+        separate off qtoshow3 from qtoshow4
+        do showtab(n+1 or n+2) as appropriate
+
+     */
+      var questions = {
+       "arith": [ // for those placed into bottom coreqs to see if they know basic arithmetic
+         "Calculate:  `-13 + 5`",
+         "Calculate:  `(-3)(-6)`",
+         "Calculate:  `2 + 3(4^2)`",
+         "What is the greatest common factor of 18 and 24?",
+         "Multiply and simplify:  `1/4 * 2/5`",
+         "Add: `1/6+3/8`",
+         "Write 6% as a decimal",
+         "Write `1/5` as a percent",
+         "Find 15% of 60",
+         "Round 2.8234 to the nearest hundredth"
+       ],
+       "pre98": [  // for students placed into 141coreq, to see if they know enough pre98 stuff
+         "Simplify `2x+4(x-2)`",
+         "Solve: `p/3 - 4 = 7`",
+         "Sketch a graph of `y=3/2x+2`",
+         "Find the slope of the line `y=3x-4`",
+         "Evaluate `y=2x^2-3x` when `x=-2`",
+         "Simplify: `x^3 * x^4`",
+         "Evaluate: `-4 + 5(2)`",
+         "Simplify: `16/+3/8`",
+         "List all the pairs of numbers that multiply to 32"
+       ],
+       "pre146": [ // for students placed into 146, 107, 131, 111, to see if they need the coreq
+         "Calculate:  `2 + 3(4^2)`",
+         "Evaluate `y=2x^2-3x` when `x=-2`",
+         "Evaluate ` (y-m)/sqrt(n) ` when `y=6, m=3, n=16`",
+         "Write 6% as a decimal",
+         "Write `1/5` as a percent",
+         "Find 15% of 60",
+         "Round 2.8234 to the nearest hundredth",
+         "If 450 racers out of 500 finished a race, what percent finished the race?",
+         "Plot the point `(2,4)` on a graph",
+         "Sketch a graph of `y=3/2x+2`",
+         "Find the slope of the line `y=3x-4`"
+       ],
+       "pre141": [  // for students placed into 141/147, to see if they need the coreq
+         "Evaluate `y=2x^2-3x` when `x=-2`",
+         "Solve: `p/3 - 4 = 7`",
+         "Solve: ` 5 - 3x lt 11`",
+         "Expand and simplify: ` 2(x-2)(x+3) `",
+         "Factor: ` x^2-5x+6 `",
+         "Solve: ` x^2-3x+1=0 `",
+         "Solve: ` 3 sqrt{x-2} - 6 = 0 `",
+         "Solve: ` 2/(x-3) - 1/4 = 5 `",
+         "Simplify: `x^3 * x^4`",
+         "Plot the point `(2,4)` on a graph",
+         "Sketch a graph of `y=3/2x+2`",
+         "Find an equation for a line passing through (1,5) and (3,9)",
+         "Simplify:  ` (1/h - 1/3)/(h-3) `"
+       ],
+       "pre142": [ // for students placed into 142, to see if they are ready
+         "Let ` f(x) = x^2 - 3x `.  Evaluate ` f(-2) `",
+         "If ` f(x) = 2x-3 ` and ` g(x) = 2/(x-1) `, find and simplify ` f(g(x))) `",
+         "Write an equation for quadratic with vertex at (2,3) and y-intercept at (0,1)",
+         "Find an equation for a line passing through (1,5) and (3,9)",
+         "Find an equation for an exponential passing through (1,5) and (3,9)",
+         "Find the vertex and x-intercepts of ` f(t) = -16t^2+36t+78 `",
+         "A population is 230 in 2017 and 245 in 2020. If the population is growing linearly, determine the population in 2025.",
+         "Solve: ` f(x) = 2|x-3| + 1 le 5 `",
+         "Find an equation for a polynomial with roots at ` x=-2 ` with multiplicity 2, ` x=1 ` with multiplicity 1, and y-intercept at (0,3)",
+         "Find the vertical and horizontal asymptotes of ` f(x) = (2x^2-5x-25)/(x^2-9) `",
+         "Find the domain of ` g(x) = 3 sqrt{x-2} - 6`",
+         "Solve:  ` 400(1.08)^t = 600 `",
+         "Solve:  ` log(4x-1) = 2 `"
+       ],
+       "pre151": [
+         "Let ` f(x) = x^2 - 3x `.  Evaluate ` f(-2) `",
+         "If ` f(x) = 2x-3 ` and ` g(x) = 2/(x-1) `, find and simplify ` f(g(x))) `",
+         "Find an equation for a line passing through (1,5) and (3,9)",
+         "Find the vertex and x-intercepts of ` f(t) = -16t^2+36t+78 `",
+         "Solve:  ` 400(1.08)^t = 600 `",
+         "Give the exact value for `cos(pi/6)`",
+         "Find all solutions on the interval `[0,2pi)`: `4cos(2x)+1=0`",
+         "Sketch a graph of `f(x) = 3cos(pi/4 x) + 1`"
+       ],
+       "pre152": [
+         "Given `f(x) = 4x^2-3x`, find the slope of the tangent line to `f(x)` at `x=4`",
+         "Find: `d/(dx)( 2sqrt(x) - 3/x^2 )`",
+         "Find: `d/(dx)( 3x^2 e^x )`",
+         "Find: `d/(dx)( 3cos(x^4+1) )`",
+         "Find: `d/(dx)( (x^2-3)/(3ln(x)) )`",
+         "If `f'(3) lt 0` and `f''(3) gt 0`, desribe the behavior of `f(x)` at `x=3`",
+         "Find the relative extrema of `f(x) = 2x + 10/x`"
+       ],
+       "pre163": [
+         "Find: `d/(dx)( 3 x^2 cos(x^4+1) )`",
+         "Find: `int_1^9 (x^2 - 3/sqrt(x)) dx`",
+         "Find: `int x^3 ln(x) dx`",
+         "Find: `int x e^x dx`",
+         "Find: `int x^3 cos(x^4-1) dx`",
+         "Find the area bounded by `y = x^2` and `y = 6-x`",
+         "Find the volume of the solid obtained by rotating the region bounded by `y=x^2`, `y=0`, and `x=4` about the y-axis."
+       ]
+      };
+      function getval(v) {
+        if (typeof v=='undefined') {
+          return v;
+        } else if (v.match(/^\d+$/)) {
+          return parseInt(v);
+        } else {
+          return v;
+        }
+      }
+      // setup nav clicks
+      $(function() {
+         $(".stepbtn, .stepnav button").on('click', function(e) {
+            if (!this.disabled) {
+              showstep(this.id.substr(3));
+            }
+         });
+         setupKatexAutoRender();
+      });
+      /*
+      <div class="stepnav">
+  	     <button type=button id="nav0" class="current" >1. Start</button>
+  	     <button type=button id="nav1" disabled>2. High School</button>
+  	     <button type=button id="nav2" disabled>3. College</button>
+  	     <button type=button id="nav3" disabled>4. Refine</button>
+         <button type=button id="nav4" disabled>5. Refine 2</button>
+  	     <button type=button id="nav5" disabled>6. Recommendation</button>
+  	  </div>
+       */
+    </script>
+    <style>
+      body {
+        max-width: 900px;
+        padding: 10px;
+        margin: auto;
+      }
+      .radiolist {
+        list-style-type: none;
+      }
+      .radiolist label {
+      	 margin-bottom: .2rem;
+      }
+      .valerr {
+      	  border: 4px solid #f00;
+      }
+      tr.valerr td:first-child {
+        border-left: 2px solid #f00 !important;
+      }
+      .stepnav {
+        display: flex;
+        margin-bottom: 15px;
+      }
+      .stepnav button {
+        flex-grow: 1;
+      }
+      .stepnav button {
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+      }
+      .stepnav button:disabled {
+        background-color: #fff;
+        color: #999;
+      }
+      .stepnav button.current {
+        background-color: #efe;
+        border-bottom: 3px solid #6a6;
+      }
+      .ratings {
+        margin-bottom: 15px;
+      }
+      .ratingbody td {
+        border: 1px solid #eee;
+        padding: 10px;
+      }
+      .ratingbody tr > :first-child {
+        padding-right: 50px;
+      }
+      .ratingbody td label {
+        margin-bottom: 0;
+      }
+      p.rec {
+        font-size: 120%;
+        font-weight: bold;
+      }
+      .arrow-steps {
+        margin-bottom: 15px;
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .arrow-steps .stepbtn {
+      	font-size: 14px;
+        line-height: 16px;
+      	text-align: center;
+      	color: #000;
+      	cursor: default;
+      	margin: 2px 3px;
+        border: 0;
+      	padding: 10px 10px 10px 30px;
+      	position: relative;
+        flex-grow: 1;
+      	background-color: #d9e3f7;
+      	-webkit-user-select: none;
+      	-moz-user-select: none;
+      	-ms-user-select: none;
+      	user-select: none;
+        transition: background-color 0.2s ease;
+        white-space: nowrap;
+      }
+      .arrow-steps .stepbtn:hover {
+        background-color: #99bbff;
+      }
+      .arrow-steps .stepbtn:hover:after {
+        border-left: 17px solid #99bbff;
+      }
+
+      .arrow-steps .stepbtn:after,
+      .arrow-steps .stepbtn:before {
+      	content: " ";
+      	position: absolute;
+      	top: 0;
+      	right: -17px;
+      	width: 0;
+      	height: 0;
+      	border-top: 19px solid transparent;
+      	border-bottom: 17px solid transparent;
+      	border-left: 17px solid #d9e3f7;
+      	z-index: 2;
+        transition: border-color 0.2s ease;
+      }
+
+      .arrow-steps .stepbtn:before {
+      	right: auto;
+      	left: 0;
+      	border-left: 17px solid #fff;
+      	z-index: 0;
+      }
+
+      .arrow-steps .stepbtn:first-child:before {
+      	border: none;
+      }
+      .arrow-steps .stepbtn:last-child:after {
+      	border: none;
+      }
+
+      .arrow-steps .stepbtn:first-child {
+      	border-top-left-radius: 4px;
+      	border-bottom-left-radius: 4px;
+        padding-left: 10px;
+      }
+      .arrow-steps .stepbtn:last-child {
+      	border-top-right-radius: 4px;
+      	border-bottom-right-radius: 4px;
+      }
+
+      .arrow-steps .stepbtn.current {
+      	color: #fff;
+      	background-color: #23468c;
+      }
+
+      .arrow-steps .stepbtn.current:after {
+      	border-left: 17px solid #23468c;
+      }
+
+      .arrow-steps .stepbtn:disabled {
+        color: #888;
+        background-color: #f5f5f5;
+      }
+      .arrow-steps .stepbtn:disabled:after {
+        border-left: 17px solid #f5f5f5;
+      }
+    </style>
+  </head>
+  <body>
+  	<h1>Pierce College Math Directed Self Placement</h1>
+      <div class="arrow-steps">
+         <button type=button id="nav0" class="stepbtn current" >1. Start</button>
+         <button type=button id="nav1" class="stepbtn" disabled>2. High School</button>
+         <button type=button id="nav2" class="stepbtn" disabled>3. College</button>
+         <button type=button id="nav3" class="stepbtn" disabled>4. Refine</button>
+         <button type=button id="nav4" class="stepbtn" disabled>5. Refine 2</button>
+         <button type=button id="nav5" class="stepbtn" disabled>6. Recommendation</button>
+      </div>
+
+  	<p class="alert alert-danger" id="error" style="display:none;"></p>
+    <div id="step0" class="step">
+      <p>
+        Welcome to the Directed Self Placement tool for Pierce College District
+        in Washington state.  This tool will help you determine the best math
+        class for you to start with at Pierce College.  We want to help you
+        avoid taking a bunch of unneeded classes, but also want to ensure you
+        take a class that you are ready for.  To get the best guidance, answer
+        all questions honestly.
+      </p>
+      <p><b>Note</b>: If you took an AP exam or a CLEP test, see an advisor
+         for help in using that score for placement.
+      </p>
+
+      <div class="form-group">
+        <label for="sid">Student ID</label>
+        <input type=text class="form-control req" id="sid" value="123">
+      </div>
+      <div class="form-group">
+        <label for="stuname">Full name</label>
+        <input type=text class="form-control req" id="stuname" value="name">
+      </div>
+      <p>We can make the best recommedations if you know what math course you
+        will need. If you're not sure, visit the
+        <a href="https://www.pierce.ctc.edu/pathways#six" target="_blank">Pierce pathways</a> website
+        and explore the pathways.  Once you find program you're interested in,
+        view the Course Map for that program and look at what math course it
+        recommends.
+      </p>
+
+      <p>Which best describes your career pathway?</p>
+      <ul class="radiolist">
+       	<li><label><input type=radio name=path value=arts> Arts, Humanities, and Communication</label></li>
+       	<li><label><input type=radio name=path value=bus> Business</label></li>
+       	<li><label><input type=radio name=path value=edu> Education</label></li>
+       	<li><label><input type=radio name=path value=health> Healthcare</label></li>
+       	<li><label><input type=radio name=path value=stem> Science, Technology, and Math</label></li>
+       	<li><label><input type=radio name=path value=soc> Social and Behavioral Sciences</label></li>
+       </ul>
+      <p>
+      <p>Do you know what math class at Pierce you need for your degree / program?
+        If you need multiple courses, pick the first one on the list that you need.</p>
+      <ul class="radiolist">
+       	<li><label><input type=radio name=knowcourse value=m141> Math 141 (Precalculus), Math 142 (Trig), or Math 151 (Calculus)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m147> Math 147 (Business Precalculus) or Math 148 (Business Calculus)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m146> Math 146 (Statistics)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m146> Math 131 (Math for Elementary Teachers) or Math 111 (Math for Preschool Teachers)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m107> Math 107 (Math in Society)</label></li>
+       	<li><label><input type=radio name=knowcourse value=dontknow> Not sure</label></li>
+       </ul>
+      <p>
+        <button class="btn btn-primary" type="button" onclick="process(0)">Get Started</button>
+      </p>
+    </div>
+    <div id="step1" class="step" style="display:none;">
+      <p>Let's start by looking at what you took in High School (secondary school).</p>
+      <p>What is the <b>last high school math class</b> that you finished with a D (1.0) or better?</p>
+      <ul class="radiolist">
+        <li><label><input type=radio name=lasths value=0> Pre-algebra (before first year algebra)</label></li>
+        <li><label><input type=radio name=lasths value=1> Algebra 1 (first year algebra) or Geometry</label></li>
+        <li><label><input type=radio name=lasths value=2> Alternative to Algebra 2</label></li>
+        <li><label><input type=radio name=lasths value=3> Algebra 2 (second year algebra)</label></li>
+        <li><label><input type=radio name=lasths value=4> Precalculus (with no trig)</label></li>
+        <li><label><input type=radio name=lasths value=5> Trigonometry, or Precalculus with Trigonometry</label></li>
+        <li><label><input type=radio name=lasths value=6> Calculus</label></li>
+       </ul>
+       <p>What grade did you receive in the class?</p>
+       <ul class="radiolist">
+       	<li><label><input type=radio name=hsgpa value=3> A (3.5 - 4.0)</label></li>
+       	<li><label><input type=radio name=hsgpa value=2> B (2.6 - 3.4)</label></li>
+       	<li><label><input type=radio name=hsgpa value=1> C (1.6-2.5)</label></li>
+        <li><label><input type=radio name=hsgpa value=0> D (1.0-1.5)</label></li>
+       </ul>
+       <p>How long ago did you take that class?</p>
+       <ul class="radiolist">
+       	<li><label><input type=radio name=hsyrs value=0> 0 - 2 years ago</label></li>
+       	<li><label><input type=radio name=hsyrs value=1> 3 - 5 years ago</label></li>
+       	<li><label><input type=radio name=hsyrs value=2> 6 - 10 years ago</label></li>
+        <li><label><input type=radio name=hsyrs value=3> more than 10 years ago</label></li>
+       </ul>
+       <p>Have you finished any math classes in college yet, with a 1.0 (D) or better?</p>
+       <ul class="radiolist">
+       	<li><label><input type=radio name=hascoll value=0> No</label></li>
+       	<li><label><input type=radio name=hascoll value=1> Yes</label></li>
+       </ul>
+       <p>
+        <button class="btn btn-primary" type="button" onclick="process(1)">Continue</button>
+      </p>
+    </div>
+    <div id="step2" class="step" style="display:none;">
+      <p>Now let's look at your college coursework.</p>
+      <p>What is the <b>last college math class</b> that you finished with a D (1.0) or better?</p>
+      <ul class="radiolist">
+        <li><label><input type=radio name=lastcoll value=0> Arithmetic or Prealgebra (like Pierce Math 50 or 54)</label></li>
+        <li><label><input type=radio name=lastcoll value=1> Elementary Algebra / Beginning Algebra (like Pierce Math 60)</label></li>
+        <li><label><input type=radio name=lastcoll value=2> Algebra for non-STEM / Intermediate Algebra in Context (like Pierce Math 96)</label></li>
+        <li><label><input type=radio name=lastcoll value=3> Intermediate Algebra for Precalculus (like Pierce Math 98)</label></li>
+        <li><label><input type=radio name=lastcoll value=4> Precalculus 1 (like Pierce Math 141)</label></li>
+        <li><label><input type=radio name=lastcoll value=5> Precalculus 2 / Trigonometry (like Pierce Math 142)</label></li>
+        <li><label><input type=radio name=lastcoll value=6> Calculus 1 (like Pierce Math 151)</label></li>
+        <li><label><input type=radio name=lastcoll value=7> Calculus 2 (like Pierce Math 152)</label></li>
+       </ul>
+       <p>What grade did you receive in the class?</p>
+       <ul class="radiolist">
+       	<li><label><input type=radio name=collgpa value=1> 2.0 - 4.0 (A, B, or C)</label></li>
+        <li><label><input type=radio name=collgpa value=0> 1.0 - 1.9 (C- or D)</label></li>
+       </ul>
+       <p>How long ago did you take that class?</p>
+       <ul class="radiolist">
+       	<li><label><input type=radio name=collyrs value=0> 0 - 2 years ago</label></li>
+       	<li><label><input type=radio name=collyrs value=1> 3 - 5 years ago</label></li>
+       	<li><label><input type=radio name=collyrs value=2> 6 - 10 years ago</label></li>
+        <li><label><input type=radio name=collyrs value=3> more than 10 years ago</label></li>
+       </ul>
+       <p>
+        <button class="btn btn-primary" type="button" onclick="process(2)">Continue</button>
+      </p>
+    </div>
+    <div id="step3" class="step" style="display:none;">
+      <p>Based on the previous math you've done, we have an idea what class is
+      right for you.  To refine and double-check that, we'd like you to look at
+      some math questions and <b>rate your confidence</b> in your ability to solve
+      each of these problems.  Please rate as:</p>
+      <ol start="0">
+        <li>I've never seen a problem like this before</li>
+        <li>I've seen problems like this before, but don't feel confident being able to do them</li>
+        <li>Feel somewhat confident that I'm able to do problems like this</li>
+        <li>Feel very confident that I'm able to do problems like this</li>
+      </ol>
+      <table class="ratings">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th colspan=4>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="ratingbody3" class="ratingbody">
+        </tbody>
+      </table>
+      <p>
+        <button class="btn btn-primary" type="button" onclick="process(3)">Continue</button>
+      </p>
+    </div>
+    <div id="step4" class="step" style="display:none;">
+      <p>To further refine, we'd like you to look at some more
+      math questions and <b>rate your confidence</b> in your ability to solve
+      each of these problems.  Please rate as:</p>
+      <ol start="0">
+        <li>I've never seen a problem like this before</li>
+        <li>I've seen problems like this before, but don't feel confident being able to do them</li>
+        <li>Feel somewhat confident that I'm able to do problems like this</li>
+        <li>Feel very confident that I'm able to do problems like this</li>
+      </ol>
+      <table class="ratings">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th colspan=4>Confidence</th>
+          </tr>
+        </thead>
+        <tbody id="ratingbody4" class="ratingbody">
+        </tbody>
+      </table>
+      <p>
+        <button class="btn btn-primary" type="button" onclick="process(4)">Continue</button>
+      </p>
+    </div>
+    <div id="step5" class="step" style="display:none">
+      <div id="m98coreq">
+        <p class="rec">You should take Math 98 with corequisite.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  Arithmetic is pretty important in 98, and it's
+          especially important that you know your times tables. It would be a good
+          idea to review arithmetic before taking Math 98.  If you feel <em>really</em>
+          weak on arithmetic, you could consider taking Math 54, Beginning Algebra,
+          which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="m98uncertcoreq">
+        <p class="rec">You can take Math 98 with corequisite, Math 107 with corequisite,
+          Math 146  with corequisite, Math 131 with corequisite, or Math 111 with corequisite.
+          You should talk to your advisor to check which course is right for your
+          program.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  Arithmetic is pretty important in 98, and it's
+          especially important that you know your times tables. It would be a good
+          idea to review arithmetic before taking Math 98.
+          For 107, 146, 131, and 111, the corequisite will review the arithmetic skills
+          needed for the class, and most teachers will allow the use of calculators.
+          If you feel <em>really</em>
+          weak on arithmetic, you could consider taking Math 54, Beginning Algebra,
+          which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="m107">
+        <p class="rec">You should take Math 107<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+      </div>
+      <div id="m107coreq">
+        <p class="rec">You should take Math 107 with corequisite.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  The corequisite will review the arithmetic skills
+          needed for the class, and most teachers will allow the use of calculators.
+          You may want to review your arithmetic before taking this class.
+          If you feel <em>really</em> weak on arithmetic, you could consider
+          taking Math 54, Beginning Algebra, which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="m146">
+        <p class="rec">You should take Math 146<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+      </div>
+      <div id="m146coreq">
+        <p class="rec">You should take Math 146 with corequisite.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  The corequisite will review the arithmetic skills
+          needed for the class, and most teachers will allow the use of calculators.
+          You may want to review your arithmetic before taking this class.
+          If you feel <em>really</em> weak on arithmetic, you could consider
+          taking Math 54, Beginning Algebra, which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="m131">
+        <p class="rec">You should take Math 131 or Math 111<span class="underprep" style="display:none;">, possibly with corequisite</span>, whichever is appropriate for your degree.</p>
+      </div>
+      <div id="m131coreq">
+        <p class="rec">You should take Math 131 with corequisite or Math 111 with corequisite,
+          whichever is appropriate for your degree.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  The course and corequisite will review the arithmetic skills
+          needed for the class using elementary education approaches.
+          You may want to review your arithmetic before taking this class.
+          If you feel <em>really</em> weak on arithmetic, you could consider
+          taking Math 54, Beginning Algebra, which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="nonstem">
+        <p class="rec">You can take Math 107, Math 146, Math 131, or Math 111.
+        You should talk to your advisor to check which course is right for your
+        program.</p>
+      </div>
+      <div id="nonstemcoreq">
+        <p class="rec">You can take Math 107 with corequisite, Math 146  with corequisite,
+          Math 131 with corequisite, Math 111 with corequisite, or Math 98 with corequisite.
+          You should talk to your advisor to check which course is right for your
+          program.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions.  The corequisite will review the arithmetic skills
+          needed for the class, and most teachers will allow the use of calculators.
+          You may want to review your arithmetic before taking this class.
+          If you feel <em>really</em> weak on arithmetic, you could consider
+          taking Math 54, Beginning Algebra, which reviews arithmetic and the basics of algebra.
+          </p>
+        </div>
+      </div>
+      <div id="m141">
+        <p class="rec">You should take Math 141<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+      </div>
+      <div id="m141coreq">
+        <p class="rec">You should take Math 141 with corequisite.</p>
+      </div>
+      <div id="m147">
+        <p class="rec">You should take Math 147<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+      </div>
+      <div id="m147coreq">
+        <p class="rec">You should take Math 147 with corequisite.
+          If this course is not available, you can take Math 98
+          then take Math 147 without corequisite, or you can take
+          Math 141 with corequisite instead.
+        </p>
+      </div>
+      <div id="stem">
+        <p class="rec">You can take Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111,
+          whichever is appropriate for your degree<span class="underprep" style="display:none;">, possibly with corequisite</span>.
+          Talk to your advisor to determine
+          the right course for you.</p>
+      </div>
+      <div id="stemcoreq">
+        <p class="rec">You can take Math 141 with corequisite, Math 147 with corequisite,
+          Math 107 with corequisite, Math 146 with corequisite,
+          Math 131 with corequisite, or Math 111 with corequisite,
+          whichever is appropriate for your degree.  Talk to your advisor to determine
+          the right course for you.</p>
+        <div class="warnarithmetic">
+          <p>Based on your ratings, it looks like you may lack some confidence with
+          arithmetic questions. TODO
+          </p>
+        </div>
+      </div>
+      <div id="m142">
+        <p class="rec">You should take Math 142.</p>
+      </div>
+      <div id="m151">
+        <p class="rec">You should take Math 151.</p>
+      </div>
+      <div id="m152">
+        <p class="rec">You should take Math 152.</p>
+      </div>
+      <div id="m163">
+        <p class="rec">You should take Math 163.</p>
+      </div>
+      <div id="warnunderpreparedcoreq">
+        <p>Based on your ratings, it appears there may be prerequisite skills that
+        you have forgotten or don't have a lot of confidence in.
+        You may be fine taking the course without a corequisite if you are willing
+        to put in some additional time studying on your own.
+        If you feel like you could use some additional help and review with
+        these skills, you may want to consider taking this course with a corequisite.
+        </p>
+      </div>
+      <div id="warnunderprepared">
+        <p>Based on your ratings it appears there may be prerequisite skills that
+        you have forgotten or don't have a lot of confidence in.  You will either
+        want to spend some time reviewing those skills before taking the class,
+        or consider taking the previous course in the sequence.
+        </p>
+      </div>
+      <div id="aboutcoreq">
+        <p>
+          Your recommendation is for a course with a corequisite.
+        </p>
+      </div>
+      <div id="coreqoption">
+        <p>
+          Based on your ratings, it looks like you're ready to take the recommended
+          course.  If you are feeling unsure, you could consider taking the
+          course with a corequisite.
+        </p>
+      </div>
+      <div id="coreqis">
+        <p>A corequisite is an additional 2 credit course linked with your regular
+        math course.  Corequisites provide instruction and support
+        with prerequisite skills needed to be successful in the main course.
+        Courses with corequisite also often spend more time on each course topic.
+        You can find courses with corequisites in the eSchedule by looking in the
+        "Details" for the course.
+        </p>
+      </div>
+      <div id="alt1">
+        <p>If your program changes, you could also take any of these courses
+          with a corequisite:
+          Math 98, Math 107, Math 146, Math 131, or Math 111.
+        </p>
+      </div>
+      <div id="alt2">
+        <p>If your program changes, you could also take any of these courses:
+          Math 98, Math 107, Math 146, Math 131, or Math 111.
+        </p>
+      </div>
+      <div id="alt3">
+        <p>If your program changes, you could also take any of these courses
+          with a corequisite:
+          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
+        </p>
+      </div>
+      <div id="alt4">
+        <p>If your program changes, you could also take any of these courses:
+          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
+        </p>
+      </div>
+      <div id="alt5">
+        <p>If your program changes, you could also take any of these courses:
+          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
