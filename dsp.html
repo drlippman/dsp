@@ -52,7 +52,7 @@
           for (var i=0; i < toget.length; i++) {
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
-          
+
           if (window.location.protocol == 'file:') {
             showstep(1);
           } else {
@@ -61,16 +61,18 @@
                 sid: $("#sid").val()
             }).done(function( msg ) {
               if (msg.match(/ERROR/)) {
-                $("#siderr").html("You already have a DSP score.");
+                $("#siderr").html("Unable to continue: you already have a DSP score.");
+                document.getElementById("siderr").scrollIntoView();
               } else {
                 showstep(1);
               }
             }).fail(function () {
               $("#siderr").html("Cannot verify this ID right now. Please try again later");
+              document.getElementById("siderr").scrollIntoView();
             });
           }
-          
-          
+
+
         } else if (n==1) { //continuing from HS page
           var toget = ['lasths','hsgpa','hsyrs','hascoll'];
           for (var i=0; i < toget.length; i++) {
@@ -335,7 +337,7 @@
         v.avgrating4 = Math.round(avgrating*100)/100;
         v.pctzeros4 = Math.round(pctzeros*100);
         v.ratingvals4 = ratingvals.slice();
-        
+
         if (v.qtoshow4 == 'arith') { // for non-stem coreq
           if (avgrating < 2 || pctzeros > .2) { // struggled on arith
             v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
@@ -421,20 +423,20 @@
         }
         submitrec();
       }
-      
+
       function submitrec() {
         var now = new Date();
         var data = {};
         $("#recordedmsg").html("Recording...");
         data.firstname = $("#firstname").val();
-        data.lastname = $("#firstname").val();
+        data.lastname = $("#lastname").val();
         data.sid = $("#sid").val();
         data.placement = v.finallevel;
         v.date = now.toISOString();
         data.values = JSON.stringify(v);
         data.record = 'record';
         console.log(data);
-        
+
         if (window.location.protocol != 'file:') {
           $.post("dspapi.php", data)
            .done(function ( msg ) {
@@ -676,7 +678,7 @@
       .ratingbody input:checked ~ span {
         background-color: #d9e3f7;
       }
-        
+
       p.rec {
         font-size: 120%;
         font-weight: bold;
@@ -772,7 +774,7 @@
         width: auto;
       }
       #siderr, #recordedmsg {
-        color: #090;
+        color: #f00;
       }
     </style>
   </head>
@@ -803,10 +805,10 @@
 
       <div class="form-group">
         <label for="sid">Student ID</label><br/>
-        <input type=text class="form-control req" id="sid" value="123">
+        <input type=text class="form-control req" id="sid" value="123"> <em id="siderr"></em>
       </div>
       <div class="form-group">
-        <label for="stuname">Name</label> <span id="siderr"></span><br/>
+        <label for="stuname">Name</label><br/>
         <input type=text class="form-control req" id="firstname" placeholder="First Name">
         <input type=text class="form-control req" id="lastname" placeholder="Last Name">
       </div>
