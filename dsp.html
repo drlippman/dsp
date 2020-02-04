@@ -4,6 +4,8 @@
   	<title>
   	  Pierce College Math Directed Self Placement
   	</title>
+  	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  	<meta name="viewport" content="width=device-width, initial-scale=1" />
   	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
   	<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
@@ -53,7 +55,7 @@
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
 
-          if (window.location.protocol == 'file:') {
+          if (!window.location.href.match(/wamap/)) {
             showstep(1);
           } else {
             $.post('dspapi.php', {
@@ -437,7 +439,7 @@
         data.record = 'record';
         console.log(data);
 
-        if (window.location.protocol != 'file:') {
+        if (window.location.href.match(/wamap/)) {
           $.post("dspapi.php", data)
            .done(function ( msg ) {
                if (msg.match(/ERROR/)) {
