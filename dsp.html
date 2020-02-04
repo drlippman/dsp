@@ -341,8 +341,8 @@
         v.ratingvals4 = ratingvals.slice();
 
         if (v.qtoshow4 == 'arith') { // for non-stem coreq
+          v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
           if (avgrating < 2 || pctzeros > .2) { // struggled on arith
-            v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
             v.warnarithmetic = true;
           }
         } else if (v.qtoshow4 == 'pre98') { // for 141coreq
@@ -423,6 +423,10 @@
         } else {
           $("#alt5").show();
         }
+        $("#resultsname").html(
+           $("#lastname").val() + ', ' + $("#firstname").val() +
+           ' (' + $("#sid").val() + ')'
+          );
         submitrec();
       }
 
@@ -453,6 +457,29 @@
            });
         }
 
+      }
+      
+      function emailrec() {
+        $("#emailmsg").html("");
+        var rec = $('#step5 *:not(:has(*)):not(#recordedmsg):visible').get().map(function(v){return v.outerHTML}).join('');
+        if (window.location.href.match(/wamap/)) {
+          $.post("dspapi.php", {
+            rec: rec,
+            email: $("#email").val()
+          })
+           .done(function ( msg ) {
+               if (msg.match(/ERROR/)) {
+                 $("#emailmsg").html("Unable to send email.");
+               } else {
+                 $("#emailmsg").html("Email sent.");
+               }
+           })
+           .fail(function () {
+               $("#emailmsg").html("Unable to send email.");
+           });
+        } else {
+          $("#emailmsg").html("Unable to send email.");
+        }
       }
     /*
       Separate out process(n)  from  showtab(n)
@@ -680,7 +707,10 @@
       .ratingbody input:checked ~ span {
         background-color: #d9e3f7;
       }
-
+      #resultsname {
+        font-size: 140%;
+        font-weight: bold;
+      }
       p.rec {
         font-size: 120%;
         font-weight: bold;
@@ -771,18 +801,27 @@
       .arrow-steps .stepbtn:disabled:after {
         border-left: 17px solid #f5f5f5;
       }
-      .form-group input[type=text] {
+      .form-group input[type=text], .form-group input[type=email] {
         display: inline;
         width: auto;
       }
-      #siderr, #recordedmsg {
+      #siderr, #recordedmsg, #emailmsg {
         color: #f00;
+      }
+      
+      .katex {
+        font-size: 1.13em;
+      }
+      @media print {    
+        .hideonprint {
+          display: none !important;
+        }
       }
     </style>
   </head>
   <body>
   	<h1>Pierce College Math Directed Self Placement</h1>
-      <div class="arrow-steps">
+      <div class="arrow-steps hideonprint">
          <button type=button id="nav0" class="stepbtn current" >1. Start</button>
          <button type=button id="nav1" class="stepbtn" disabled>2. High School</button>
          <button type=button id="nav2" class="stepbtn" disabled>3. College</button>
@@ -960,6 +999,7 @@
       </p>
     </div>
     <div id="step5" class="step" style="display:none">
+      <p id="resultsname"></p>
       <div id="m98coreq">
         <p class="rec">You should take Math 98 with corequisite.</p>
         <div class="warnarithmetic">
@@ -1166,6 +1206,13 @@
           Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
         </p>
       </div>
+      <p class="form-group hideonprint">
+        <button type=button onclick="window.print()" class="btn btn-primary">Print Results</button><br/>
+        <label for="email">Email me a copy of these results:</label> 
+          <input type=email name="email" id="email" placeholder="Email Address" class="form-control"/>
+          <button type=button onclick="emailrec()" class="btn btn-secondary">Send Email</button>
+          <span id="emailmsg"></span>
+      </p>
       <p id="recordedmsg"></p>
     </div>
   </body>

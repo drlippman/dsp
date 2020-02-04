@@ -33,6 +33,18 @@ if (isset($_POST['checksid'])) {
 
   echo $hasgrade ? 'ERROR' : 'OK';
   exit;
+} else if (isset($_POST['email'])) {
+  require_once('../includes/email.php');
+  require_once("../includes/htmLawed.php");
+  $rec = myhtmLawed($_POST['rec']);
+  $email = Sanitize::emailAddress($_POST['email']);
+  if ($email === false || trim($email) == '' || $rec == '') {
+    return 'ERROR';
+  } else {
+    send_email($email, $sendfrom, 'Pierce Directed Self Placement', $rec);
+    echo "DONE";
+  }
+  exit;
 } else if (isset($_POST['record'])) {
   $query = "SELECT iu.id,ig.id AS gradeid,ig.refid FROM imas_users AS iu LEFT JOIN imas_grades AS ig ";
   $query .= "ON ig.userid=iu.id AND ig.gradetype='offline' AND ig.gradetypeid=? ";
