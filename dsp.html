@@ -124,7 +124,7 @@
 
         // generate content
         if (n == 5) {
-          generateRecommedation();
+          generateRecommendation();
         }
 
         // set nav tab status
@@ -177,8 +177,8 @@
           6: 151
           7: 152
           8: 153
-
         */
+        
         switch (v.lasths) {
           case 0: //prealg
             initlevel = 1;
@@ -265,7 +265,7 @@
         v.initlevel = Math.max(initlevel,1);
       }
       function calcRecommendation3() {
-        // pull ratings from step 3, make recommedation
+        // pull ratings from step 3, make recommendation
         // if recommendation for addl refinement, will set v.qtoshow4
         // return: 4 for additional refinement, 5 for done
         var ratingvals = [];
@@ -396,9 +396,9 @@
         }
         return html;
       }
-      function generateRecommedation() {
+      function generateRecommendation() {
         $("#step5 div, #step5 span").hide();
-        // display recommedation based on previous calculations
+        // display recommendation based on previous calculations
         $("#"+v.recommendation).show();
         if (v.warnunderprepared) {
           $("#"+v.recommendation + " .underprep").show();
@@ -898,7 +898,7 @@
         <input type=text class="form-control req" id="firstname" placeholder="First Name">
         <input type=text class="form-control req" id="lastname" placeholder="Last Name">
       </div>
-      <p>We can make the best recommedations if you know what math course you
+      <p>We can make the best recommendations if you know what math course you
         will need. If you're not sure, visit the
         <a href="https://www.pierce.ctc.edu/pathways#six" target="_blank">Pierce pathways</a> website
         and explore the pathways.  Once you find the program you're interested in,
