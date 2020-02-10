@@ -312,18 +312,22 @@
              v.warnunderprepared = true;
           }
         } else { // higher stem
-          if (avgrating < 2 || pctzeros > .1) { // struggled on prereq
+          if (avgrating < 1 || pctzeros > .4) { // really strugged on prereq - recommend retake
+            v.finallevel = v.finallevel - 1;
+          } else if (avgrating < 2 || pctzeros > .1) { // struggled on prereq
             v.warnunderprepared = true;
           }
           if (v.knowcourse == 'm147' || (v.knowcourse=='dontknow' && v.path=='bus')) {
             v.recommendation = 'm147';
-          } else if (v.initlevel == 5) {
+          } else if (v.finallevel == 4) {
+            v.recommendation = 'm141';
+          } else if (v.finallevel == 5) {
             v.recommendation = 'm142';
-          } else if (v.initlevel == 6) {
+          } else if (v.finallevel == 6) {
             v.recommendation = 'm151';
-          } else if (v.initlevel == 7) {
+          } else if (v.finallevel == 7) {
             v.recommendation = 'm152';
-          } else if (v.initlevel == 8) {
+          } else if (v.finallevel == 8) {
             v.recommendation = 'm163';
           }
         }
