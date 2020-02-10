@@ -5,6 +5,7 @@ require("../init_without_validate.php");
 $basecid = 22891;  // course ID where data is stored
 $term = 'DSPv1';    // Designator for DPS version
 $gradeitemid = 24985;    // Offline grade ID to store values in
+$processor = 'dlippman@pierce.ctc.edu';  // receivor of DSP scores
 
 $sid = preg_replace('/\W/','',$_POST['sid']);
 if ($sid == '') {
@@ -90,14 +91,28 @@ if (isset($_POST['checksid'])) {
   $fb = $_POST['values'];
 
   if (empty($gradeid)) { // new grade
+    $emailsubject = 'Pierce DSP Score';
     $query = "INSERT INTO imas_grades (gradetype,gradetypeid,refid,userid,score,feedback) ";
     $query .= "VALUES ('offline',?,?,?,?,?)";
     $stm = $DBH->prepare($query);
     $stm->execute(array($gradeitemid, $now, $userid, $score, $fb));
   } else {
+    $emailsubject = 'Revised Pierce DSP Score';
     $query = "UPDATE imas_grades SET refid=?,score=?,feedback=CONCAT(feedback, ',', ?) WHERE id=?";
     $stm = $DBH->prepare($query);
     $stm->execute(array($now, $score, $fb, $gradeid));
   }
+
+  $message = '<h2>Pierce Math Directed Self Placement Result</h2><p>';
+  $message .= "Name: " . $_POST['lastname'] . ', ' . $_POST['firstname'] . ' ' . $_POST['middlename'] . '<br/>';
+  $message .= "Student ID: " . $_POST['sid'] . '<br/>';
+  $message .= "Birth Date: " . $_POST['birthday'] . '<br/>';
+  $message .= "Telephone: " . $_POST['tel'] . '<br/>';
+  $message .= "Placement: " . $score . '</p>';
+
+  require_once('../includes/email.php');
+  send_email($processor, $sendfrom, $emailsubject, $message);
+
+
   echo "DONE";
 }

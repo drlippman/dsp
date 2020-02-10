@@ -178,7 +178,7 @@
           7: 152
           8: 153
         */
-        
+
         switch (v.lasths) {
           case 0: //prealg
             initlevel = 1;
@@ -422,12 +422,23 @@
         if (v.finallevel < 5) {
           $("#alt"+v.finallevel).show();
         } else {
+          if (v.finallevel == 5) {
+            $("#maxstem").html("Math&amp; 142 (Precalculus 2)");
+          } else if (v.finallevel == 6) {
+            $("#maxstem").html("Math&amp; 151 (Calculus 1)");
+          } else if (v.finallevel == 7) {
+            $("#maxstem").html("Math&amp; 152 (Calculus 2)");
+          } else if (v.finallevel == 8) {
+            $("#maxstem").html("Math&amp; 163 (Calculus 3)");
+          }
+          $("#maxstem").show();
           $("#alt5").show();
         }
         $("#resultsname").html(
            $("#lastname").val() + ', ' + $("#firstname").val() +
            ' (' + $("#sid").val() + ')'
           );
+        $(".showalways").show();
         submitrec();
       }
 
@@ -436,8 +447,11 @@
         var data = {};
         $("#recordedmsg").html("Recording...");
         data.firstname = $("#firstname").val();
+        data.middlename = $("#middlename").val();
         data.lastname = $("#lastname").val();
         data.sid = $("#sid").val();
+        data.birthday = $("#birthday").val();
+        data.tel = $("#tel").val();
         data.placement = v.finallevel;
         v.date = now.toISOString();
         data.values = JSON.stringify(v);
@@ -459,7 +473,7 @@
         }
 
       }
-      
+
       function emailrec() {
         $("#emailmsg").html("");
         var rec = $('#step5 *:not(:has(*)):not(#recordedmsg):visible').get().map(function(v){return v.outerHTML}).join('');
@@ -662,6 +676,12 @@
         background-color: #efe;
         border-bottom: 3px solid #6a6;
       }
+      .my-form-row {
+        display: flex;
+      }
+      .my-form-row > div {
+        margin-right: 20px;
+      }
       .ratings {
         margin-bottom: 15px;
       }
@@ -713,7 +733,6 @@
         font-weight: bold;
       }
       p.rec {
-        font-size: 120%;
         font-weight: bold;
       }
       .arrow-steps {
@@ -809,15 +828,18 @@
       #siderr, #recordedmsg, #emailmsg {
         color: #f00;
       }
-      
+
       ul.spaced li {
         margin-bottom: 10px;
       }
-      
+
       .katex {
         font-size: 1.13em;
       }
-      @media print {    
+      .subdued {
+        color: #999;
+      }
+      @media print {
         .hideonprint {
           display: none !important;
         }
@@ -845,9 +867,9 @@
         take a class that you are ready for.  To get the best guidance, answer
         all questions honestly.
       </p>
-      <p><b>Note</b>: Pierce also accepts 
-        <a href="#ModalScrollable" data-toggle="modal">other measures</a> for placement. 
-        See an advisor for help in using any of these for placement.
+      <p><b>Note</b>: Pierce also accepts
+        <a href="#ModalScrollable" data-toggle="modal">other measures</a> for placement.
+        Look to see if any of these apply to you, and if so, see an advisor for help in using any of these for placement.
       </p>
       <div class="modal fade" id="ModalScrollable" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable" role="document">
@@ -859,26 +881,23 @@
               </button>
             </div>
             <div class="modal-body">
-              <p>Pierce College also accepts these measures for placement.  Please 
+              <p>Pierce College also accepts these measures for placement.  Please
                see an advisor for help in using these measures.</p>
-               
+
               <ul class="spaced">
                 <li>Prior college coursework: The Directed Self Placement tool
                 will ask about your previous coursework and use it for placement, but
-                to receive transfer credit for your previous coursework, be sure to 
+                to receive transfer credit for your previous coursework, be sure to
                 bring your transcript to your advisor.</li>
-                <li>Washington State Smarter Balanced Assessment: 
-                Appropriate level scores on the Washington State Smarter Balanced state test, 
-                when enrolling in math in the fall quarter immediately following graduation.</li>
                 <li>Advanced Placement (AP) exam scores: Provide copies of your
-                scores to your advisor to determine if you're eligible to receive 
+                scores to your advisor to determine if you're eligible to receive
                 college credit for your course work</li>
                 <li>International Baccalaureate (IB) exam scores</li>
                 <li>SAT / ACT scores</li>
                 <li>CLEP / DSST exam scores</li>
                 <li>GED exam scores</li>
-                <li>Placement reciprocity: Recent placements achieved on any approved 
-                  Washington State placement test are accepted for math placement via 
+                <li>Placement reciprocity: Recent placements achieved on any approved
+                  Washington State placement test are accepted for math placement via
                   our Statewide Placement Reciprocity Agreement.</li>
                </ul>
             </div>
@@ -889,15 +908,30 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="sid">Student ID</label><br/>
-        <input type=text class="form-control req" id="sid" value="123"> <em id="siderr"></em>
+      <div class="my-form-row">
+      	<div class="form-group">
+      		<label for="sid">Pierce Student ID</label><br/>
+      		<input type=text class="form-control req" id="sid" value="123"> <em id="siderr"></em>
+        </div>
+        <div class="form-group">
+          <label for="birthday">Birth Date</label><br/>
+          <input type=date class="form-control req" id="birthday">
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone Number</label><br/>
+          <input id="tel" type="tel" class="form-control req"
+           pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+           placeholder="xxx-xxx-xxxx">
+        </div>
       </div>
+
       <div class="form-group">
-        <label for="stuname">Name</label><br/>
+        <label for="stuname">Name <span class="subdued">(that you used when you applied to Pierce)</span></label><br/>
         <input type=text class="form-control req" id="firstname" placeholder="First Name">
+        <input type=text class="form-control" id="middlename" placeholder="Middle Name">
         <input type=text class="form-control req" id="lastname" placeholder="Last Name">
       </div>
+
       <p>We can make the best recommendations if you know what math course you
         will need. If you're not sure, visit the
         <a href="https://www.pierce.ctc.edu/pathways#six" target="_blank">Pierce pathways</a> website
@@ -919,11 +953,11 @@
       <p>Do you know what math class at Pierce you need for your degree / program?
         If you need multiple courses, pick the first one on the list that you need.</p>
       <ul class="radiolist">
-       	<li><label><input type=radio name=knowcourse value=m141> Math 141 (Precalculus), Math 142 (Trig), or Math 151 (Calculus)</label></li>
-       	<li><label><input type=radio name=knowcourse value=m147> Math 147 (Business Precalculus) or Math 148 (Business Calculus)</label></li>
-       	<li><label><input type=radio name=knowcourse value=m146> Math 146 (Statistics)</label></li>
-       	<li><label><input type=radio name=knowcourse value=m146> Math 131 (Math for Elementary Teachers) or Math 111 (Math for Preschool Teachers)</label></li>
-       	<li><label><input type=radio name=knowcourse value=m107> Math 107 (Math in Society)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m141> Math&amp; 141 (Precalculus), Math&amp; 142 (Trig), or Math&amp; 151 (Calculus)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m147> Math 147 (Business Precalculus) or Math&amp; 148 (Business Calculus)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m146> Math&amp; 146 (Statistics)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m146> Math&amp; 131 (Math for Elementary Educators) or Math 111 (Math for Early Childhood Education)</label></li>
+       	<li><label><input type=radio name=knowcourse value=m107> Math&amp; 107 (Math in Society)</label></li>
        	<li><label><input type=radio name=knowcourse value=dontknow> Not sure</label></li>
        </ul>
       <p>
@@ -932,17 +966,20 @@
     </div>
     <div id="step1" class="step" style="display:none;">
       <p>Let's start by looking at what you took in High School (secondary school).</p>
-      <p>What is the <b>last high school math class</b> that you finished with a D (1.0) or better?</p>
+      <p>What is the <b>last high school math class</b> that you finished with a D (1.0) or better, or
+        will complete before starting at Pierce?
+        <span class="subdued">If you're not sure, click on the Examples for
+        each course until you find the highest course with questions that look familiar.</span></p>
       <ul class="radiolist">
-        <li><label><input type=radio name=lasths value=0> Pre-algebra (before first year algebra)</label></li>
-        <li><label><input type=radio name=lasths value=1> Algebra 1 (first year algebra) or Geometry</label></li>
-        <li><label><input type=radio name=lasths value=2> Alternative to Algebra 2</label></li>
-        <li><label><input type=radio name=lasths value=3> Algebra 2 (second year algebra)</label></li>
-        <li><label><input type=radio name=lasths value=4> Precalculus (with no trig)</label></li>
-        <li><label><input type=radio name=lasths value=5> Trigonometry, or Precalculus with Trigonometry</label></li>
-        <li><label><input type=radio name=lasths value=6> Calculus</label></li>
+        <li><label><input type=radio name=lasths value=0> Pre-algebra (before first year algebra)</label> <a href="#ex54" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=1> Algebra 1 (first year algebra) or Geometry</label> <a href="#ex60" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=2> Alternative to Algebra 2</label> <a href="#ex96" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=3> Algebra 2 (second year algebra)</label> <a href="#ex98" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=4> Precalculus (with no trig)</label> <a href="#ex141" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=5> Trigonometry, or Precalculus with Trigonometry</label> <a href="#ex142" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lasths value=6> Calculus</label> <a href="#ex151" data-toggle="modal">Examples</a></li>
        </ul>
-       <p>What grade did you receive in the class?</p>
+       <p>What grade did you receive (or expect to receive) in the class?</p>
        <ul class="radiolist">
        	<li><label><input type=radio name=hsgpa value=3> A (3.5 - 4.0)</label></li>
        	<li><label><input type=radio name=hsgpa value=2> B (2.6 - 3.4)</label></li>
@@ -969,14 +1006,14 @@
       <p>Now let's look at your college coursework.</p>
       <p>What is the <b>last college math class</b> that you finished with a D (1.0) or better?</p>
       <ul class="radiolist">
-        <li><label><input type=radio name=lastcoll value=0> Arithmetic or Prealgebra (like Pierce Math 50 or 54)</label></li>
-        <li><label><input type=radio name=lastcoll value=1> Elementary Algebra / Beginning Algebra (like Pierce Math 60)</label></li>
-        <li><label><input type=radio name=lastcoll value=2> Algebra for non-STEM / Intermediate Algebra in Context (like Pierce Math 96)</label></li>
-        <li><label><input type=radio name=lastcoll value=3> Intermediate Algebra for Precalculus (like Pierce Math 98)</label></li>
-        <li><label><input type=radio name=lastcoll value=4> Precalculus 1 (like Pierce Math 141)</label></li>
-        <li><label><input type=radio name=lastcoll value=5> Precalculus 2 / Trigonometry (like Pierce Math 142)</label></li>
-        <li><label><input type=radio name=lastcoll value=6> Calculus 1 (like Pierce Math 151)</label></li>
-        <li><label><input type=radio name=lastcoll value=7> Calculus 2 (like Pierce Math 152)</label></li>
+        <li><label><input type=radio name=lastcoll value=0> Arithmetic or Prealgebra (like Pierce Math 50 or 54)</label> <a href="#ex54" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=1> Elementary Algebra / Beginning Algebra (like Pierce Math 60)</label> <a href="#ex60" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=2> Algebra for non-STEM / Intermediate Algebra in Context (like Pierce Math 96)</label> <a href="#ex96" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=3> Intermediate Algebra for Precalculus (like Pierce Math 98)</label> <a href="#ex98" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=4> Precalculus 1 (like Pierce Math&amp; 141)</label> <a href="#ex141" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=5> Precalculus 2 / Trigonometry (like Pierce Math&amp; 142)</label> <a href="#ex142" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=6> Calculus 1 (like Pierce Math&amp; 151)</label> <a href="#ex151" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value=7> Calculus 2 (like Pierce Math&amp; 152)</label> <a href="#ex152" data-toggle="modal">Examples</a></li>
        </ul>
        <p>What grade did you receive in the class?</p>
        <ul class="radiolist">
@@ -1045,8 +1082,61 @@
     </div>
     <div id="step5" class="step" style="display:none">
       <p id="resultsname"></p>
+      <div id="alt1">
+        <p>Depending on your specific needs, you could take any of these courses
+          with a corequisite:
+          Math 98 (Intermediate Algebra for Precalculus),
+          Math&amp; 107 (Math in Society),
+          Math&amp; 146 (Statistics),
+          Math&amp; 131 (Math for Elementary Educators), or
+          Math 111 (Math for Early Childhood Education).
+        </p>
+      </div>
+      <div id="alt2">
+        <p>Depending on your specific needs, you could take any of these courses
+          with a corequisite:
+          Math&amp; 141 (Precalculus 1),
+          Math 147 (Business Precalculus),
+          Math&amp; 107 (Math in Society),
+          Math&amp; 146 (Statistics),
+          Math&amp; 131 (Math for Elementary Educators), or
+          Math 111 (Math for Early Childhood Education).
+        </p>
+      </div>
+      <div id="alt3">
+        <p>Depending on your specific needs, you could take any of these courses:
+          Math&amp; 107 (Math in Society),
+          Math&amp; 146 (Statistics),
+          Math&amp; 131 (Math for Elementary Educators), or
+          Math 111 (Math for Early Childhood Education);
+          or these courses
+          with a corequisite:
+          Math&amp; 141 (Precalculus 1),
+          Math 147 (Business Precalculus).
+        </p>
+      </div>
+      <div id="alt4">
+        <p>Depending on your specific needs, you could take any of these courses:
+          Math&amp; 141 (Precalculus 1),
+          Math 147 (Business Precalculus),
+          Math&amp; 107 (Math in Society),
+          Math&amp; 146 (Statistics),
+          Math&amp; 131 (Math for Elementary Educators), or
+          Math 111 (Math for Early Childhood Education).
+        </p>
+      </div>
+      <div id="alt5">
+        <p>Depending on your specific needs, you could take any of these courses:
+          <span id="maxstem"></span>,
+          Math 147 (Business Precalculus),
+          Math&amp; 107 (Math in Society),
+          Math&amp; 146 (Statistics),
+          Math&amp; 131 (Math for Elementary Educators), or
+          Math 111 (Math for Early Childhood Education).
+        </p>
+      </div>
       <div id="m98coreq">
-        <p class="rec">You should take Math 98 with corequisite.</p>
+        <p class="rec">Your first math class should probably be Math 98 with corequisite.</p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions.  Arithmetic is pretty important in 98, and it's
@@ -1058,10 +1148,9 @@
         </div>
       </div>
       <div id="m98uncertcoreq">
-        <p class="rec">You can take Math 98 with corequisite, Math 107 with corequisite,
-          Math 146  with corequisite, Math 131 with corequisite, or Math 111 with corequisite.
-          You should talk to your advisor to check which course is right for your
-          program.</p>
+        <p class="rec">Your first math class should probably be Math 98 with corequisite, Math&amp; 107 with corequisite,
+          Math&amp; 146  with corequisite, Math&amp; 131 with corequisite, or Math 111 with corequisite.
+          </p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions.  Arithmetic is pretty important in 98, and it's
@@ -1076,10 +1165,10 @@
         </div>
       </div>
       <div id="m107">
-        <p class="rec">You should take Math 107<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 107<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
       </div>
       <div id="m107coreq">
-        <p class="rec">You should take Math 107 with corequisite.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 107 with corequisite.</p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions.  The corequisite will review the arithmetic skills
@@ -1091,10 +1180,10 @@
         </div>
       </div>
       <div id="m146">
-        <p class="rec">You should take Math 146<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 146<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
       </div>
       <div id="m146coreq">
-        <p class="rec">You should take Math 146 with corequisite.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 146 with corequisite.</p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions.  The corequisite will review the arithmetic skills
@@ -1106,10 +1195,10 @@
         </div>
       </div>
       <div id="m131">
-        <p class="rec">You should take Math 131 or Math 111<span class="underprep" style="display:none;">, possibly with corequisite</span>, whichever is appropriate for your degree.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 131 or Math 111<span class="underprep" style="display:none;">, possibly with corequisite</span>, whichever is appropriate for your degree.</p>
       </div>
       <div id="m131coreq">
-        <p class="rec">You should take Math 131 with corequisite or Math 111 with corequisite,
+        <p class="rec">Your first math class should probably be Math&amp; 131 with corequisite or Math 111 with corequisite,
           whichever is appropriate for your degree.</p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
@@ -1122,15 +1211,13 @@
         </div>
       </div>
       <div id="nonstem">
-        <p class="rec">You can take Math 107, Math 146, Math 131, or Math 111.
-        You should talk to your advisor to check which course is right for your
-        program.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 107, Math&amp; 146, Math&amp; 131, or Math 111.
+        </p>
       </div>
       <div id="nonstemcoreq">
-        <p class="rec">You can take Math 107 with corequisite, Math 146  with corequisite,
-          Math 131 with corequisite, Math 111 with corequisite, or Math 98 with corequisite.
-          You should talk to your advisor to check which course is right for your
-          program.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 107 with corequisite, Math&amp; 146  with corequisite,
+          Math&amp; 131 with corequisite, Math 111 with corequisite, or Math 98 with corequisite.
+          </p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions.  The corequisite will review the arithmetic skills
@@ -1142,33 +1229,31 @@
         </div>
       </div>
       <div id="m141">
-        <p class="rec">You should take Math 141<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 141<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
       </div>
       <div id="m141coreq">
-        <p class="rec">You should take Math 141 with corequisite.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 141 with corequisite.</p>
       </div>
       <div id="m147">
-        <p class="rec">You should take Math 147<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
+        <p class="rec">Your first math class should probably be Math 147<span class="underprep" style="display:none;">, possibly with corequisite</span>.</p>
       </div>
       <div id="m147coreq">
         <p class="rec">You should take Math 147 with corequisite.
           If this course is not available, you can take Math 98
           then take Math 147 without corequisite, or you can take
-          Math 141 with corequisite instead.
+          Math&amp; 141 with corequisite instead.
         </p>
       </div>
       <div id="stem">
-        <p class="rec">You can take Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111,
+        <p class="rec">Your first math class should probably be Math&amp; 141, Math 147, Math&amp; 107, Math&amp; 146, Math&amp; 131, or Math 111,
           whichever is appropriate for your degree<span class="underprep" style="display:none;">, possibly with corequisite</span>.
-          Talk to your advisor to determine
-          the right course for you.</p>
+          </p>
       </div>
       <div id="stemcoreq">
-        <p class="rec">You can take Math 141 with corequisite, Math 147 with corequisite,
-          Math 107 with corequisite, Math 146 with corequisite,
-          Math 131 with corequisite, or Math 111 with corequisite,
-          whichever is appropriate for your degree.  Talk to your advisor to determine
-          the right course for you.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 141 with corequisite, Math 147 with corequisite,
+          Math&amp; 107 with corequisite, Math&amp; 146 with corequisite,
+          Math&amp; 131 with corequisite, or Math 111 with corequisite,
+          whichever is appropriate for your degree.</p>
         <div class="warnarithmetic">
           <p>Based on your ratings, it looks like you may lack some confidence with
           arithmetic questions. The corequisite will review the arithmetic skills
@@ -1180,16 +1265,16 @@
         </div>
       </div>
       <div id="m142">
-        <p class="rec">You should take Math 142.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 142.</p>
       </div>
       <div id="m151">
-        <p class="rec">You should take Math 151.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 151.</p>
       </div>
       <div id="m152">
-        <p class="rec">You should take Math 152.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 152.</p>
       </div>
       <div id="m163">
-        <p class="rec">You should take Math 163.</p>
+        <p class="rec">Your first math class should probably be Math&amp; 163.</p>
       </div>
       <div id="warnunderpreparedcoreq">
         <p>Based on your ratings, it appears there may be prerequisite skills that
@@ -1205,6 +1290,14 @@
         you have forgotten or don't have a lot of confidence in.  You will either
         want to spend some time reviewing those skills before taking the class,
         or consider taking the previous course in the sequence.
+        </p>
+      </div>
+      <div class="showalways">
+        <p>
+          Print a copy of this recommendation and take it with you when you meet
+          with your advisor. Your advisor will be able to help you determine the
+          right class for you to take, considering both your major and your
+          desired transfer institution.
         </p>
       </div>
       <div id="aboutcoreq">
@@ -1224,47 +1317,171 @@
         math course.  Corequisites provide instruction and support
         with prerequisite skills needed to be successful in the main course.
         Courses with corequisite also often spend more time on each course topic.
-        You can find courses with corequisites in the eSchedule by looking in the
+        You can find courses with corequisites in the class schedule by looking in the
         "Details" for the course.
         </p>
       </div>
-      <div id="alt1">
-        <p>If your program changes, you could also take any of these courses
-          with a corequisite:
-          Math 98, Math 107, Math 146, Math 131, or Math 111.
-        </p>
-      </div>
-      <div id="alt2">
-        <p>If your program changes, you could also take any of these courses
-          with a corequisite:
-          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
-        </p>
-      </div>
-      <div id="alt3">
-        <p>If your program changes, you could also take any of these courses: 
-          Math 107, Math 146, Math 131, or Math 111; or these courses 
-          with a corequisite: Math 141, Math 147.
-        </p>
-      </div>
-      <div id="alt4">
-        <p>If your program changes, you could also take any of these courses:
-          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
-        </p>
-      </div>
-      <div id="alt5">
-        <p>If your program changes, you could also take any of these courses:
-          Math 141, Math 147, Math 107, Math 146, Math 131, or Math 111.
-        </p>
-      </div>
+
       <p class="form-group hideonprint">
         <button type=button onclick="window.print()" class="btn btn-primary">Print Results</button><br/>
-        <label for="email">Email me a copy of these results:</label> 
+        <label for="email">Email me a copy of these results:</label>
           <input type=email name="email" id="email" placeholder="Email Address" class="form-control"/>
           <button type=button onclick="emailrec()" class="btn btn-secondary">Send Email</button>
           <span id="emailmsg"></span>
       </p>
       <p id="recordedmsg"></p>
     </div>
-    
+    <div class="modal fade" id="ex54" tabindex="-1" role="dialog" aria-labelledby="54ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="54ModalScrollableTitle">Prealgebra Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex60" tabindex="-1" role="dialog" aria-labelledby="60ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="60ModalScrollableTitle">Algebra 1 / Math 60 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex96" tabindex="-1" role="dialog" aria-labelledby="96ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="96ModalScrollableTitle">Alt Alg 2 / Math 98 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex98" tabindex="-1" role="dialog" aria-labelledby="98ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="98ModalScrollableTitle">Algebra 2 / Math 98 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex141" tabindex="-1" role="dialog" aria-labelledby="141ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="141ModalScrollableTitle">Precalculus / Math&amp; 141 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex142" tabindex="-1" role="dialog" aria-labelledby="142ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="142ModalScrollableTitle">Trig / Math&amp; 142 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex151" tabindex="-1" role="dialog" aria-labelledby="151ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="151ModalScrollableTitle">Calculus 1 / Math&amp; 151 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="ex152" tabindex="-1" role="dialog" aria-labelledby="152ModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="152ModalScrollableTitle">Calculus 2 / Math&amp; 152 Examples</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Solve: `3x + 4 = 7`</p>
+            <p>Simplify: `1/2 + 2/3`</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
