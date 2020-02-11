@@ -56,7 +56,7 @@
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
 
-          if (!window.location.href.match(/wamap/)) {
+          if (!window.location.href.match(/wamap/) || $("#sid").val()=='1234') {
             showstep(1);
           } else {
             $.post('dspapi.php', {
@@ -317,7 +317,10 @@
           } else if (avgrating < 2 || pctzeros > .1) { // struggled on prereq
             v.warnunderprepared = true;
           }
-          if (v.knowcourse == 'm147' || (v.knowcourse=='dontknow' && v.path=='bus')) {
+          if (v.stutype == 'nonstem') {
+            v.recommendation = v.knowcourse=='dontknow' ? 'nonstem' : v.knowcourse;
+            v.warnunderprepared = false;
+          } else if (v.knowcourse == 'm147' || (v.knowcourse=='dontknow' && v.path=='bus')) {
             v.recommendation = 'm147';
           } else if (v.finallevel == 4) {
             v.recommendation = 'm141';
@@ -371,8 +374,6 @@
           qtoshow = 'arith';
         } else if (v.stutype == 'stem' && v.initlevel < 5) {
           qtoshow = 'pre141'
-        } else if (v.stutype == 'nonstem') {
-          qtoshow = 'pre146';
         } else if (v.initlevel == 5) {
           qtoshow = 'pre142';
         } else if (v.initlevel == 6) {
@@ -381,7 +382,9 @@
           qtoshow = 'pre152';
         } else if (v.initlevel == 8) {
           qtoshow = 'pre163';
-        }
+        } else {
+          qtoshow = 'pre146';
+        } 
         v.qtoshow3 = qtoshow;
         console.log("qtoshow3:"+qtoshow);
         $("#ratingbody3").html(genRatingHtml(qtoshow));
@@ -465,7 +468,7 @@
         data.record = 'record';
         console.log(data);
 
-        if (window.location.href.match(/wamap/)) {
+        if (window.location.href.match(/wamap/) && $("#sid").val()!='1234') {
           $.post("dspapi.php", data)
            .done(function ( msg ) {
                if (msg.match(/ERROR/)) {
@@ -484,7 +487,7 @@
       function emailrec() {
         $("#emailmsg").html("");
         var rec = $('#step5 *:not(:has(*)):not(#recordedmsg):visible').get().map(function(v){return v.outerHTML}).join('');
-        if (window.location.href.match(/wamap/)) {
+        if (window.location.href.match(/wamap/) && $("#sid").val()!='1234') {
           $.post("dspapi.php", {
             rec: rec,
             email: $("#email").val()
