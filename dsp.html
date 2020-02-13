@@ -46,6 +46,7 @@
       	});
       	if (haserror) {
       	  $("#error").html("Please answer all the questions.").show();
+      	  window.scrollTo(0,0);
       	  return;
       	}
       	$("#error").hide();
@@ -825,7 +826,7 @@
       }
 
       .arrow-steps .stepbtn:disabled {
-        color: #888;
+        color: #707070;
         background-color: #f5f5f5;
       }
       .arrow-steps .stepbtn:disabled:after {
@@ -847,12 +848,18 @@
         font-size: 1.13em;
       }
       .subdued {
-        color: #999;
+        color: #757575;
       }
       @media print {
         .hideonprint {
           display: none !important;
         }
+      }
+      a {
+        color: #0071EB;
+      }
+      .btn-primary {
+        background-color: #0071EB;
       }
     </style>
   </head>
@@ -877,7 +884,7 @@
         take a class that you are ready for.  To get the best guidance, answer
         all questions honestly.
       </p>
-      <p><b>Note</b>: Pierce also accepts
+      <p><strong>Note</strong>: Pierce also accepts
         <a href="#ModalScrollable" data-toggle="modal">other measures</a> for placement.
         Look to see if any of these apply to you, and if so, see an advisor for help in using any of these for placement.
       </p>
@@ -921,14 +928,14 @@
       <div class="my-form-row">
       	<div class="form-group">
       		<label for="sid">Pierce Student ID</label><br/>
-      		<input type=text class="form-control req" id="sid" value="123"> <em id="siderr"></em>
+      		<input type=text class="form-control req" id="sid" value=""> <em id="siderr"></em>
         </div>
         <div class="form-group">
           <label for="birthday">Birth Date</label><br/>
           <input type=date class="form-control req" id="birthday">
         </div>
         <div class="form-group">
-          <label for="phone">Phone Number</label><br/>
+          <label for="tel">Phone Number</label><br/>
           <input id="tel" type="tel" class="form-control req"
            pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
            placeholder="xxx-xxx-xxxx">
@@ -936,10 +943,10 @@
       </div>
 
       <div class="form-group">
-        <label for="stuname">Name <span class="subdued">(that you used when you applied to Pierce)</span></label><br/>
-        <input type=text class="form-control req" id="firstname" placeholder="First Name">
-        <input type=text class="form-control" id="middlename" placeholder="Middle Name">
-        <input type=text class="form-control req" id="lastname" placeholder="Last Name">
+        Name <span class="subdued">(that you used when you applied to Pierce)</span><br/>
+        <input type=text class="form-control req" id="firstname" placeholder="First Name" aria-label="First Name">
+        <input type=text class="form-control" id="middlename" placeholder="Middle Name" aria-label="Middle Name">
+        <input type=text class="form-control req" id="lastname" placeholder="Last Name" aria-label="Last Name">
       </div>
 
       <p>We can make the best recommendations if you know what math course you
@@ -976,7 +983,7 @@
     </div>
     <div id="step1" class="step" style="display:none;">
       <p>Let's start by looking at what you took in High School (secondary school).</p>
-      <p>What is the <b>last high school math class</b> that you finished with a D (1.0) or better, or
+      <p>What is the <strong>last high school math class</strong> that you finished with a D (1.0) or better, or
         will complete before starting at Pierce?
         <span class="subdued">If you're not sure, click on the Examples for
         each course until you find the highest course with questions that look familiar.</span></p>
@@ -1014,7 +1021,7 @@
     </div>
     <div id="step2" class="step" style="display:none;">
       <p>Now let's look at your college coursework.</p>
-      <p>What is the <b>last college math class</b> that you finished with a D (1.0) or better?</p>
+      <p>What is the <strong>last college math class</strong> that you finished with a D (1.0) or better?</p>
       <ul class="radiolist">
         <li><label><input type=radio name=lastcoll value=0> Arithmetic or Prealgebra (like Pierce Math 50 or 54)</label> <a href="#ex54" data-toggle="modal">Examples</a></li>
         <li><label><input type=radio name=lastcoll value=1> Elementary Algebra / Beginning Algebra (like Pierce Math 60)</label> <a href="#ex60" data-toggle="modal">Examples</a></li>
@@ -1044,7 +1051,7 @@
     <div id="step3" class="step" style="display:none;">
       <p>Based on the previous math you've done, we have an idea what class is
       right for you.  To refine and double-check that, we'd like you to look at
-      some math questions and <b>rate your confidence</b> in your ability to solve
+      some math questions and <strong>rate your confidence</strong> in your ability to solve
       each of these problems.  Please rate as:</p>
       <ol start="0">
         <li>I've never seen a problem like this before</li>
@@ -1053,6 +1060,7 @@
         <li>Feel very confident that I'm able to do problems like this</li>
       </ol>
       <table class="ratings">
+        <caption class="sr-only">Question Confidence Ratings</caption>
         <thead>
           <tr>
             <th>Question</th>
@@ -1068,7 +1076,7 @@
     </div>
     <div id="step4" class="step" style="display:none;">
       <p>To further refine, we'd like you to look at some more
-      math questions and <b>rate your confidence</b> in your ability to solve
+      math questions and <strong>rate your confidence</strong> in your ability to solve
       each of these problems.  Please rate as:</p>
       <ol start="0">
         <li>I've never seen a problem like this before</li>
@@ -1077,6 +1085,7 @@
         <li>Feel very confident that I'm able to do problems like this</li>
       </ol>
       <table class="ratings">
+        <caption class="sr-only">Question Confidence Ratings</caption>
         <thead>
           <tr>
             <th>Question</th>
