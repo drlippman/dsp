@@ -236,6 +236,14 @@
                 collinitlevel = 2;
               }
               break;
+            case 107: // 107 or 146
+            case 146:
+              if (v.collgpa < 1) { // low or been a while
+                collinitlevel = 2;
+              } else {
+                collinitlevel = 3;
+              }
+              break;
             case 3: // 98
               if (v.collgpa < 1) { // low or been a while
                 collinitlevel = 3;
@@ -385,7 +393,7 @@
           qtoshow = 'pre163';
         } else {
           qtoshow = 'pre146';
-        } 
+        }
         v.qtoshow3 = qtoshow;
         console.log("qtoshow3:"+qtoshow);
         $("#ratingbody3").html(genRatingHtml(qtoshow));
@@ -1027,6 +1035,8 @@
         <li><label><input type=radio name=lastcoll value=1> Elementary Algebra / Beginning Algebra (like Pierce Math 60)</label> <a href="#ex60" data-toggle="modal">Examples</a></li>
         <li><label><input type=radio name=lastcoll value=2> Algebra for non-STEM / Intermediate Algebra in Context (like Pierce Math 96)</label> <a href="#ex96" data-toggle="modal">Examples</a></li>
         <li><label><input type=radio name=lastcoll value=3> Intermediate Algebra for Precalculus (like Pierce Math 98)</label> <a href="#ex98" data-toggle="modal">Examples</a></li>
+        <li><label><input type=radio name=lastcoll value="107"> Math in Society / Math for Liberal Arts (like Pierce Math&amp; 107)</label></li>
+        <li><label><input type=radio name=lastcoll value="146"> Statistics (like Pierce Math&amp; 146)</label></li>
         <li><label><input type=radio name=lastcoll value=4> Precalculus 1 (like Pierce Math&amp; 141)</label> <a href="#ex141" data-toggle="modal">Examples</a></li>
         <li><label><input type=radio name=lastcoll value=5> Precalculus 2 / Trigonometry (like Pierce Math&amp; 142)</label> <a href="#ex142" data-toggle="modal">Examples</a></li>
         <li><label><input type=radio name=lastcoll value=6> Calculus 1 (like Pierce Math&amp; 151)</label> <a href="#ex151" data-toggle="modal">Examples</a></li>
