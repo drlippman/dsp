@@ -57,7 +57,7 @@
             v[toget[i]] = getval($("input[name="+toget[i]+"]:checked").val());
           }
 
-          if (!window.location.href.match(/wamap/) || $("#sid").val()=='1234') {
+          if (!window.location.href.match(/(wamap|myopenmath)/) || $("#sid").val()=='1234') {
             showstep(1);
           } else {
             $.post('dspapi.php', {
@@ -457,13 +457,35 @@
            $("#lastname").val() + ', ' + $("#firstname").val() +
            ' (' + $("#sid").val() + ')'
           );
-        $(".showalways").show();
-        submitrec();
+        $(".showalways").show(submitrec);
+      }
+
+      function getVisibleText() {
+        /*
+        var element = document.getElementById("step5");
+        window.getSelection().removeAllRanges();
+
+        var range = document.createRange();
+        range.selectNode(element);
+        window.getSelection().addRange(range);
+
+        var visibleText = window.getSelection().toString().trim();
+        window.getSelection().removeAllRanges();
+
+        return visibleText;
+        */
+        var outputClone = $('#step5').clone();
+        $('#step5 :hidden, #step5 .hideonprint, #step5 #recordedmsg').remove();
+        var output = $("#step5").html().replace(/\s+/g,' ');
+        $('#step5').replaceWith(outputClone);
+        return output;
       }
 
       function submitrec() {
         var now = new Date();
         var data = {};
+        var rec = getVisibleText();
+
         $("#recordedmsg").html("Recording...");
         data.firstname = $("#firstname").val();
         data.middlename = $("#middlename").val();
@@ -475,9 +497,11 @@
         v.date = now.toISOString();
         data.values = JSON.stringify(v);
         data.record = 'record';
+        data.rec = rec;
+
         console.log(data);
 
-        if (window.location.href.match(/wamap/) && $("#sid").val()!='1234') {
+        if (window.location.href.match(/(wamap|myopenmath)/) && $("#sid").val()!='1234') {
           $.post("dspapi.php", data)
            .done(function ( msg ) {
                if (msg.match(/ERROR/)) {
@@ -495,8 +519,8 @@
 
       function emailrec() {
         $("#emailmsg").html("");
-        var rec = $('#step5 *:not(:has(*)):not(#recordedmsg):visible').get().map(function(v){return v.outerHTML}).join('');
-        if (window.location.href.match(/wamap/) && $("#sid").val()!='1234') {
+        var rec = getVisibleText(document.getElementById("step5"));
+        if (window.location.href.match(/(wamap|myopenmath)/) && $("#sid").val()!='1234') {
           $.post("dspapi.php", {
             rec: rec,
             email: $("#email").val()

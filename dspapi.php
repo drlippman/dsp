@@ -2,17 +2,17 @@
 
 require("../init_without_validate.php");
 
-$basecid = 22891;  // course ID where data is stored
+$basecid = 13394;  // course ID where data is stored
 $term = 'DSPv1';    // Designator for DPS version
-$gradeitemid = 24985;    // Offline grade ID to store values in
-$processor = 'dlippman@pierce.ctc.edu';  // receivor of DSP scores
+$gradeitemid = 120864;    // Offline grade ID to store values in
+//$processor = 'dlippman@pierce.ctc.edu';  // receivor of DSP scores
 
 $sid = preg_replace('/\W/','',$_POST['sid']);
 if ($sid == '') {
   echo "ERROR";
   exit;
 }
-$diagsid = $sid.'~'.$basecid.'~'.$term;
+$diagsid = $sid.'~'.$term.'~'.$basecid;
 $now = time();
 
 if (isset($_POST['checksid'])) {
@@ -47,7 +47,7 @@ if (isset($_POST['checksid'])) {
   }
   exit;
 } else if (isset($_POST['record'])) {
-  $query = "SELECT iu.id,ig.id AS gradeid,ig.refid FROM imas_users AS iu LEFT JOIN imas_grades AS ig ";
+  $query = "SELECT iu.id,ig.id AS gradeid,ig.feedback,ig.refid FROM imas_users AS iu LEFT JOIN imas_grades AS ig ";
   $query .= "ON ig.userid=iu.id AND ig.gradetype='offline' AND ig.gradetypeid=? ";
   $query .= "WHERE iu.SID=?";
   $stm = $DBH->prepare($query);
@@ -59,12 +59,16 @@ if (isset($_POST['checksid'])) {
     $query = "INSERT INTO imas_users (SID, password, rights, FirstName, LastName, email, lastaccess) ";
     $query .= "VALUES (:SID, :password, :rights, :FirstName, :LastName, :email, :lastaccess);";
     $stm = $DBH->prepare($query);
-    if (!isset($_POST['passwd'])) {
-      $_POST['passwd'] = "none";
+
+    $firstname = strip_tags($_POST['firstname']);
+    if (!empty($_POST['middlename'])) {
+      $firstname .= ' ' . strip_tags($_POST['middlename']);
     }
+
+    $email = strip_tags($_POST['birthday']) . '@' . strip_tags($_POST['tel']);
     $stm->execute(array(':SID'=>$diagsid, ':password'=>'none', ':rights'=>10,
-      ':FirstName'=>$_POST['firstname'], ':LastName'=>$_POST['lastname'],
-      ':email'=>'@', ':lastaccess'=>$now
+      ':FirstName'=>$firstname, ':LastName'=>strip_tags($_POST['lastname']),
+      ':email'=>$email, ':lastaccess'=>$now
       ));
     $userid = $DBH->lastInsertId();
     $gradeid = null;
@@ -88,7 +92,7 @@ if (isset($_POST['checksid'])) {
   }
 
   $score = intval($_POST['placement']);
-  $fb = $_POST['values'];
+  $fb = $_POST['rec'] . '<hr>' . $_POST['values'];
 
   if (empty($gradeid)) { // new grade
     $emailsubject = 'Pierce DSP Score';
@@ -96,23 +100,27 @@ if (isset($_POST['checksid'])) {
     $query .= "VALUES ('offline',?,?,?,?,?)";
     $stm = $DBH->prepare($query);
     $stm->execute(array($gradeitemid, $now, $userid, $score, $fb));
+    echo "New";
   } else {
     $emailsubject = 'Revised Pierce DSP Score';
-    $query = "UPDATE imas_grades SET refid=?,score=?,feedback=CONCAT(feedback, ',', ?) WHERE id=?";
+    $query = "UPDATE imas_grades SET refid=?,score=?,feedback=? WHERE id=?";
     $stm = $DBH->prepare($query);
+    $fb .= substr($row['feedback'], strpos($row['feedback'],'<hr>'));
     $stm->execute(array($now, $score, $fb, $gradeid));
+    echo "Update";
   }
 
-  $message = '<h2>Pierce Math Directed Self Placement Result</h2><p>';
-  $message .= "Name: " . $_POST['lastname'] . ', ' . $_POST['firstname'] . ' ' . $_POST['middlename'] . '<br/>';
-  $message .= "Student ID: " . $_POST['sid'] . '<br/>';
-  $message .= "Birth Date: " . $_POST['birthday'] . '<br/>';
-  $message .= "Telephone: " . $_POST['tel'] . '<br/>';
-  $message .= "Placement: " . $score . '</p>';
+  if (!empty($processor)) {
+    $message = '<h2>Pierce Math Directed Self Placement Result</h2><p>';
+    $message .= "Name: " . $_POST['lastname'] . ', ' . $_POST['firstname'] . ' ' . $_POST['middlename'] . '<br/>';
+    $message .= "Student ID: " . $_POST['sid'] . '<br/>';
+    $message .= "Birth Date: " . $_POST['birthday'] . '<br/>';
+    $message .= "Telephone: " . $_POST['tel'] . '<br/>';
+    $message .= "Placement: " . $score . '</p>';
 
-  require_once('../includes/email.php');
-  send_email($processor, $sendfrom, $emailsubject, $message);
-
+    require_once('../includes/email.php');
+    send_email($processor, $sendfrom, $emailsubject, $message);
+  }
 
   echo "DONE";
 }
